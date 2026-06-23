@@ -1,0 +1,19 @@
+@model AltLigMenajer.Models.Player
+
+@{
+    var posGroup = AltLigMenajer.Helpers.CurrencyHelper.GetPositionGroup(Model.Position);
+}
+<div class="player-card flex-none w-14 flex flex-col items-center gap-1 @(Model.IsInjured ? "opacity-60 cursor-not-allowed" : "cursor-grab active:cursor-grabbing")" data-player-id="@Model.Id" data-pos-group="@posGroup" @(Model.IsInjured ? "data-injured=\"true\"" : "")>
+    <div class="relative w-12 h-14 @(Model.IsInjured ? "bg-error/20 border-error/50" : Model.Ovr >= 65 ? "bg-surface-container-highest border-primary shadow-[0_0_15px_rgba(142,255,113,0.2)]" : "bg-surface-container-highest border-outline-variant/30") rounded-lg border flex flex-col items-center justify-center">
+        <span class="font-label text-[8px] @(Model.IsInjured ? "text-error" : Model.Ovr >= 65 ? "text-primary" : "text-on-surface-variant") absolute top-1 left-1">@Model.Position</span>
+        @if (Model.IsInjured)
+        {
+            <span class="absolute top-0.5 right-0.5 text-[7px] bg-error text-white px-1 rounded font-bold leading-tight">SAK</span>
+        }
+        <span class="font-headline text-lg font-bold leading-none @(Model.IsInjured ? "text-error" : Model.Ovr >= 65 ? "text-on-surface" : "text-on-surface-variant")">@Model.Ovr</span>
+        <div class="w-8 h-1 bg-surface-container mt-1 rounded-full overflow-hidden">
+            <div class="h-full @(Model.Fatigue > 70 ? "bg-error" : Model.Fatigue > 40 ? "bg-tertiary" : "bg-primary") w-[@(Math.Min(Model.Fatigue, 100))%]"></div>
+        </div>
+    </div>
+    <p class="font-label text-[9px] text-center truncate w-full @(Model.IsInjured ? "text-error" : Model.Ovr >= 65 ? "text-on-surface" : "text-on-surface-variant")">@Model.Name</p>
+</div>

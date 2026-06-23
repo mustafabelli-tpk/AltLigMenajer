@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html class="dark" lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>@ViewData["Title"] - ALT LİG MENAJER</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#767575",
+                        "secondary": "#e5e2e1",
+                        "surface-container-highest": "#262626",
+                        "inverse-on-surface": "#565555",
+                        "on-surface": "#ffffff",
+                        "on-primary-container": "#0b5800",
+                        "inverse-surface": "#fcf9f8",
+                        "tertiary-dim": "#00deea",
+                        "error": "#ff7351",
+                        "tertiary": "#88f6ff",
+                        "on-secondary": "#525151",
+                        "on-background": "#ffffff",
+                        "surface": "#0e0e0e",
+                        "surface-container": "#1a1a1a",
+                        "primary-container": "#2ff801",
+                        "on-error-container": "#ffd2c8",
+                        "secondary-dim": "#d6d4d3",
+                        "on-tertiary": "#005d62",
+                        "on-surface-variant": "#adaaaa",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-bright": "#2c2c2c",
+                        "primary-dim": "#2be800",
+                        "on-secondary-fixed": "#403f3f",
+                        "outline-variant": "#484847",
+                        "primary": "#8eff71",
+                        "on-tertiary-fixed-variant": "#005e63",
+                        "background": "#0e0e0e",
+                        "on-secondary-container": "#d2d0cf",
+                        "surface-dim": "#0e0e0e",
+                        "surface-container-high": "#20201f",
+                        "on-primary-fixed": "#064200",
+                        "on-primary-fixed-variant": "#0d6200",
+                        "on-tertiary-fixed": "#003f43",
+                        "surface-container-lowest": "#000000",
+                        "tertiary-fixed": "#17eefa",
+                        "tertiary-container": "#17eefa",
+                        "primary-fixed-dim": "#2be800",
+                        "on-primary": "#0d6100",
+                        "error-container": "#b92902",
+                        "inverse-primary": "#106f00",
+                        "surface-tint": "#8eff71",
+                        "surface-variant": "#262626",
+                        "secondary-fixed-dim": "#d6d4d3",
+                        "on-error": "#450900",
+                        "on-tertiary-container": "#005458",
+                        "surface-container-low": "#131313",
+                        "primary-fixed": "#2ff801",
+                        "error-dim": "#d53d18",
+                        "on-secondary-fixed-variant": "#5c5b5b",
+                        "secondary-container": "#474746",
+                        "tertiary-fixed-dim": "#00deea"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Lexend"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #484847; border-radius: 10px; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-fixed">
+
+    @RenderBody()
+
+    <!-- BottomNavBar -->
+    <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1a1a]/90 backdrop-blur-xl border-t border-[#484847]/20 shadow-[0_-8px_24px_rgba(0,0,0,0.5)] rounded-t-3xl">
+
+        @{
+            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+            string NavClass(string ctrl) =>
+                currentController?.Equals(ctrl, StringComparison.OrdinalIgnoreCase) == true
+                    ? "flex flex-col items-center justify-center text-[#8eff71] bg-[#2ff801]/10 rounded-xl px-3 py-1 shadow-[0_0_12px_rgba(142,255,113,0.2)] scale-110 transition-all"
+                    : "flex flex-col items-center justify-center text-[#adaaaa] px-3 py-1 hover:text-[#8eff71] transition-all";
+            string FillStyle(string ctrl) =>
+                currentController?.Equals(ctrl, StringComparison.OrdinalIgnoreCase) == true
+                    ? "font-variation-settings: 'FILL' 1;" : "";
+        }
+
+        <a class="@NavClass("Home")" asp-controller="Home" asp-action="Index">
+            <span class="material-symbols-outlined mb-1" style="@FillStyle("Home")">dashboard</span>
+            <span class="font-['Lexend'] text-[10px] uppercase font-bold tracking-widest">OFİS</span>
+        </a>
+        <a class="@NavClass("Squad")" asp-controller="Squad" asp-action="Index">
+            <span class="material-symbols-outlined mb-1" style="@FillStyle("Squad")">groups</span>
+            <span class="font-['Lexend'] text-[10px] uppercase font-bold tracking-widest">KADRO</span>
+        </a>
+        <a class="@NavClass("Tactic")" asp-controller="Tactic" asp-action="Index">
+            <span class="material-symbols-outlined mb-1" style="@FillStyle("Tactic")">strategy</span>
+            <span class="font-['Lexend'] text-[10px] uppercase font-bold tracking-widest">TAKTİKLER</span>
+        </a>
+        <a class="@NavClass("Transfer")" asp-controller="Transfer" asp-action="Index">
+            <span class="material-symbols-outlined mb-1" style="@FillStyle("Transfer")">payments</span>
+            <span class="font-['Lexend'] text-[10px] uppercase font-bold tracking-widest">TRANSFER</span>
+        </a>
+        <a class="@NavClass("League")" asp-controller="League" asp-action="Index">
+            <span class="material-symbols-outlined mb-1" style="@FillStyle("League")">leaderboard</span>
+            <span class="font-['Lexend'] text-[10px] uppercase font-bold tracking-widest">LİG</span>
+        </a>
+        <a class="@NavClass("Inbox")" asp-controller="Inbox" asp-action="Index">
+            <span class="material-symbols-outlined mb-1" style="@FillStyle("Inbox")">mail</span>
+            <span class="font-['Lexend'] text-[10px] uppercase font-bold tracking-widest">MESAJLAR</span>
+        </a>
+    </nav>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

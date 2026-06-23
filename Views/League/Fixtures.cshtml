@@ -1,0 +1,165 @@
+@model AltLigMenajer.Models.FixtureWeekViewModel
+@{
+    int selectedTier = (int)(ViewBag.SelectedTier ?? 2);
+    ViewData["Title"] = "Fikstür";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string leagueName = selectedTier == 1 ? "SÜPER LİG" : "TFF 1. LİG";
+}
+@section Styles {
+<style>
+.glass-panel { background: rgba(26,26,26,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(72,72,71,0.2); }
+.match-card { background: rgba(255,255,255,0.03); transition: all 0.2s; }
+.match-card:hover { background: rgba(255,255,255,0.06); transform: scale(1.02); }
+.tier-tab { transition: all 0.2s; }
+.tier-tab.active { color: #8eff71; border-bottom: 2px solid #8eff71; }
+.tier-tab:not(.active) { color: #adaaaa; }
+.tier-tab:not(.active):hover { color: #ffffff; }
+</style>
+}
+
+<header class="fixed top-0 z-50 w-full bg-[#0e0e0e] flex items-center px-6 py-4 bg-gradient-to-b from-[#1a1a1a] to-transparent">
+    <div class="flex items-center">
+        <h1 class="font-headline text-lg font-bold uppercase tracking-tighter text-primary">@leagueName</h1>
+    </div>
+    <div class="flex items-center gap-4 ml-auto">
+        <div class="bg-primary/20 border border-primary/30 px-3 py-1 rounded-lg">
+            <span class="font-label text-[10px] text-primary font-bold">HAFTA: @Model.SelectedWeek / @Model.TotalWeeks</span>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-32 px-4 min-h-screen">
+    <!-- League Tier Tabs -->
+    <div class="flex justify-center gap-4 mb-6">
+        <a asp-action="Fixtures" asp-controller="League" asp-route-tier="1"
+           class="tier-tab pb-2 px-4 font-headline font-bold text-sm uppercase tracking-wider @(selectedTier == 1 ? "active" : "")">
+            🏆 Süper Lig
+        </a>
+        <a asp-action="Fixtures" asp-controller="League" asp-route-tier="2"
+           class="tier-tab pb-2 px-4 font-headline font-bold text-sm uppercase tracking-wider @(selectedTier == 2 ? "active" : "")">
+            ⚽ TFF 1. Lig
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="flex justify-center gap-8 mb-8 border-b border-outline-variant/10">
+        <a asp-action="Index" asp-controller="League" asp-route-tier="@selectedTier" class="pb-3 px-2 text-on-surface-variant font-label font-bold text-xs uppercase tracking-widest hover:text-on-surface transition-colors">PUAN DURUMU</a>
+        <a asp-action="Fixtures" asp-controller="League" asp-route-tier="@selectedTier" class="pb-3 px-2 text-primary font-label font-bold text-xs uppercase tracking-widest border-b-2 border-primary">FİKSTÜR</a>
+        <a asp-action="Stats" asp-controller="League" asp-route-tier="@selectedTier" class="pb-3 px-2 text-on-surface-variant font-label font-bold text-xs uppercase tracking-widest hover:text-on-surface transition-colors">KRALLIK</a>
+    </nav>
+
+    @{
+        int currentWeek = Model.SelectedWeek;
+        int nextWeek = (currentWeek >= 34) ? 1 : currentWeek + 1;
+        int prevWeek = (currentWeek <= 1) ? 34 : currentWeek - 1;
+    }
+    <!-- Week Selector -->
+    <div class="flex justify-center mb-8">
+        <form method="get" asp-action="Fixtures" class="flex items-center gap-3">
+            <input type="hidden" name="tier" value="@selectedTier" />
+            <a asp-action="Fixtures" asp-route-week="@prevWeek" asp-route-tier="@selectedTier" class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors border border-outline-variant/20">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </a>
+            
+            <div class="relative">
+                <select name="week" onchange="this.form.submit()" class="appearance-none bg-surface-container-high border border-outline-variant/20 text-on-surface font-headline font-bold text-lg rounded-xl px-6 py-2 pr-10 focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer">
+                    @for(int w=1; w<=Model.TotalWeeks; w++)
+                    {
+                        if (w == Model.SelectedWeek)
+                        {
+                            <option value="@w" selected>@w. HAFTA</option>
+                        }
+                        else
+                        {
+                            <option value="@w">@w. HAFTA</option>
+                        }
+                    }
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+            </div>
+
+            <a asp-action="Fixtures" asp-route-week="@nextWeek" asp-route-tier="@selectedTier" class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors border border-outline-variant/20">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </a>
+        </form>
+    </div>
+
+    <!-- Match List -->
+    <div class="max-w-3xl mx-auto space-y-4">
+        @{
+            // Group by Date for cleaner UI
+            var groupedMatches = Model.Matches.GroupBy(m => m.MatchDate.Date).OrderBy(g => g.Key);
+        }
+        
+        @foreach (var group in groupedMatches)
+        {
+            <div class="pt-4 first:pt-0">
+                <h3 class="font-label text-xs text-on-surface-variant font-bold tracking-widest uppercase mb-3 text-center">@group.Key.ToString("d MMMM yyyy, dddd", new System.Globalization.CultureInfo("tr-TR"))</h3>
+                
+                <div class="space-y-3">
+                    @foreach (var match in group)
+                    {
+                        bool isUserMatch = match.HomeTeamId == Model.ManagerTeamId || match.AwayTeamId == Model.ManagerTeamId;
+                        string matchClass = isUserMatch ? "border-l-4 border-l-primary" : "border border-outline-variant/10";
+                        string? homeCode = match.HomeTeam?.Name?.Length >= 3 ? match.HomeTeam?.Name?[..3].ToUpper() : match.HomeTeam?.Name?.ToUpper();
+                        string? awayCode = match.AwayTeam?.Name?.Length >= 3 ? match.AwayTeam?.Name?[..3].ToUpper() : match.AwayTeam?.Name?.ToUpper();
+
+                        <div class="match-card glass-panel rounded-2xl p-4 flex items-center justify-between @matchClass">
+                            <div class="text-on-surface-variant font-label text-[10px] font-bold w-12 flex-shrink-0">
+                                @match.MatchDate.ToString("HH:mm")
+                            </div>
+
+                            <div class="flex-1 grid grid-cols-3 gap-2 items-center">
+                                <!-- Home Team -->
+                                <div class="flex items-center justify-end gap-3 text-right">
+                                    <span class="font-headline text-sm md:text-base font-bold @(match.HomeTeamId == Model.ManagerTeamId ? "text-primary" : "text-on-surface") truncate">@match.HomeTeam?.Name</span>
+                                    <div class="w-8 h-8 flex-shrink-0 bg-surface-container-highest flex items-center justify-center rounded-lg border border-outline-variant/20 hidden sm:flex">
+                                        <span class="text-[8px] font-black text-on-surface-variant">@homeCode</span>
+                                    </div>
+                                </div>
+
+                                <!-- Score -->
+                                <div class="flex justify-center">
+                                    @if (match.IsPlayed)
+                                    {
+                                        <div class="bg-surface-container-high px-4 py-2 rounded-lg border border-outline-variant/20 font-headline font-black text-lg tracking-wider text-on-surface">
+                                            @match.HomeScore - @match.AwayScore
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-surface-container/50 px-4 py-2 rounded-lg border border-outline-variant/10 font-headline font-bold text-on-surface-variant">
+                                            VS
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Away Team -->
+                                <div class="flex items-center justify-start gap-3 text-left">
+                                    <div class="w-8 h-8 flex-shrink-0 bg-surface-container-highest flex items-center justify-center rounded-lg border border-outline-variant/20 hidden sm:flex">
+                                        <span class="text-[8px] font-black text-on-surface-variant">@awayCode</span>
+                                    </div>
+                                    <span class="font-headline text-sm md:text-base font-bold @(match.AwayTeamId == Model.ManagerTeamId ? "text-primary" : "text-on-surface") truncate">@match.AwayTeam?.Name</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!Model.Matches.Any())
+        {
+            <div class="text-center py-10 text-on-surface-variant">
+                <span class="material-symbols-outlined text-4xl mb-2 opacity-30">calendar_month</span>
+                <p class="font-headline">Bu hafta için maç bulunamadı.</p>
+            </div>
+        }
+    </div>
+</main>
+
+<div class="fixed top-0 left-0 w-full h-screen pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 blur-[120px] rounded-full"></div>
+    <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-tertiary/5 blur-[120px] rounded-full"></div>
+</div>

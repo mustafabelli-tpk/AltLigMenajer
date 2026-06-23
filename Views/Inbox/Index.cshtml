@@ -1,0 +1,56 @@
+@model IEnumerable<AltLigMenajer.Models.Message>
+
+@{
+    ViewData["Title"] = "Gelen Kutusu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-screen bg-background pt-8 pb-32 px-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="font-headline font-black text-4xl text-on-surface uppercase tracking-tighter">Gelen Kutusu</h1>
+            <div class="bg-surface-container-high px-4 py-2 rounded-full border border-outline-variant/20 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">mail</span>
+                <span class="font-headline font-bold text-on-surface">@Model.Count(m => !m.IsRead) Okunmamış</span>
+            </div>
+        </div>
+
+        <div class="bg-surface-container rounded-2xl border border-outline-variant/20 overflow-hidden shadow-2xl">
+            <div class="divide-y divide-outline-variant/10">
+                @foreach (var message in Model)
+                {
+                    var isUnread = !message.IsRead;
+                    <a href="@Url.Action("Read", "Inbox", new { id = message.Id })" class="flex flex-col sm:flex-row gap-4 p-5 hover:bg-surface-bright transition-colors @(isUnread ? "bg-primary/5" : "bg-transparent")">
+                        <div class="flex items-center gap-4 flex-1">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 @(isUnread ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface-variant")">
+                                <span class="material-symbols-outlined text-xl">@(message.Sender.Contains("Sağlık") ? "medical_services" : "corporate_fare")</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <h3 class="font-label text-sm font-bold uppercase truncate @(isUnread ? "text-primary" : "text-on-surface")">@message.Sender</h3>
+                                    <span class="font-body text-xs text-on-surface-variant ml-4 whitespace-nowrap">@message.DateSent.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <h4 class="font-headline font-bold text-lg text-on-surface truncate">@message.Subject</h4>
+                                <p class="font-body text-sm text-on-surface-variant truncate mt-1">@message.Content</p>
+                            </div>
+                        </div>
+                        @if (isUnread)
+                        {
+                            <div class="self-center">
+                                <span class="w-3 h-3 rounded-full bg-primary inline-block shadow-[0_0_10px_rgba(142,255,113,0.5)]"></span>
+                            </div>
+                        }
+                    </a>
+                }
+                
+                @if (!Model.Any())
+                {
+                    <div class="p-12 text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-6xl opacity-20 mb-4 block">inbox</span>
+                        <p class="font-headline font-bold text-xl">Gelen kutunuz boş</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

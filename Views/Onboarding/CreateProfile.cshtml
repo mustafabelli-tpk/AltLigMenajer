@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Profil Oluştur";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#121212] px-4">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+
+    <div class="z-10 max-w-md w-full bg-surface-container-high p-8 rounded-2xl border border-outline-variant/20 shadow-xl">
+        <div class="text-center mb-8">
+            <span class="inline-block p-4 rounded-full bg-primary/10 text-primary mb-4">
+                <span class="material-symbols-outlined text-4xl">badge</span>
+            </span>
+            <h2 class="font-headline font-black text-3xl text-on-surface uppercase tracking-tight">Menajer Profili</h2>
+            <p class="font-body text-on-surface-variant text-sm mt-2">Kariyerin boyunca anılacağın ismi belirle.</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="bg-error/10 border border-error/20 text-error p-4 rounded-lg mb-6">
+                <div asp-validation-summary="All" class="text-sm"></div>
+            </div>
+        }
+
+        <form asp-action="CreateProfile" asp-controller="Onboarding" method="post" class="space-y-6">
+            <div>
+                <label for="firstName" class="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Ad</label>
+                <input type="text" id="firstName" name="firstName" required
+                       class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                       placeholder="Örn. Mustafa" />
+            </div>
+            
+            <div>
+                <label for="lastName" class="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Soyad</label>
+                <input type="text" id="lastName" name="lastName" required
+                       class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                       placeholder="Örn. Belli" />
+            </div>
+
+            <button type="submit" class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary-fixed px-6 py-4 rounded-xl font-headline font-bold text-lg uppercase hover:shadow-[0_0_20px_rgba(142,255,113,0.3)] transition-all active:scale-95 mt-4">
+                Devam Et <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </form>
+    </div>
+</div>

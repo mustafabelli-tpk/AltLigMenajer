@@ -1,0 +1,140 @@
+@model List<AltLigMenajer.Models.TransferOffer>
+@{
+    ViewData["Title"] = "Transfer Teklifleri";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles {
+<style>
+.glass-panel { background: rgba(26,26,26,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(72,72,71,0.2); }
+.offer-card { transition: all 0.3s ease; }
+.offer-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+.counter-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+.counter-section.open { max-height: 200px; }
+</style>
+}
+
+<header class="fixed top-0 z-50 w-full bg-[#0e0e0e] flex items-center px-6 py-4 bg-gradient-to-b from-[#1a1a1a] to-transparent">
+    <div class="flex items-center gap-3">
+        <a href="@Url.Action("Index", "Transfer")" class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-high hover:bg-surface-bright transition-colors">
+            <span class="material-symbols-outlined text-sm text-on-surface-variant">arrow_back</span>
+        </a>
+        <h1 class="font-headline text-lg font-bold uppercase tracking-tighter text-primary">TRANSFER TEKLİFLERİ</h1>
+    </div>
+</header>
+
+<main class="pt-24 pb-32 px-4 min-h-screen max-w-2xl mx-auto">
+
+    @if (TempData["TransferSuccess"] != null)
+    {
+        <div class="mb-4 p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary font-label text-sm">
+            <span class="material-symbols-outlined align-middle mr-1">check_circle</span> @TempData["TransferSuccess"]
+        </div>
+    }
+    @if (TempData["TransferError"] != null)
+    {
+        <div class="mb-4 p-4 rounded-xl bg-error/10 border border-error/20 text-error font-label text-sm">
+            <span class="material-symbols-outlined align-middle mr-1">error</span> @TempData["TransferError"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-16">
+            <span class="material-symbols-outlined text-5xl text-outline-variant mb-4 block">inbox</span>
+            <p class="font-headline text-lg font-bold text-on-surface-variant">Bekleyen teklif bulunmuyor</p>
+            <p class="font-label text-sm text-outline-variant mt-1">Oyuncularınızı transfer listesine koyduğunuzda AI takımlardan teklifler gelecektir.</p>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var offer in Model)
+            {
+                <div class="offer-card glass-panel rounded-2xl overflow-hidden">
+                    <!-- Offer Header -->
+                    <div class="p-5 border-b border-outline-variant/10">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary">groups</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-headline font-bold text-on-surface">@offer.OfferingTeam?.Name</h3>
+                                    <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider">@offer.DateOffered.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+                            <span class="bg-tertiary/10 text-tertiary text-xs font-bold px-3 py-1 rounded-full border border-tertiary/20">BEKLEMEDE</span>
+                        </div>
+
+                        <!-- Player Info -->
+                        <div class="flex items-center justify-between bg-surface-container-high/50 rounded-xl p-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+                                    <span class="material-symbols-outlined text-sm text-on-surface-variant">person</span>
+                                </div>
+                                <div>
+                                    <span class="font-headline font-bold text-on-surface block">@offer.Player?.Name</span>
+                                    <span class="font-label text-[10px] text-on-surface-variant uppercase">@offer.Player?.Position • OVR @offer.Player?.Ovr</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-headline font-black text-xl text-primary block">@offer.OfferedFee.ToString("N0") €</span>
+                                <span class="font-label text-[9px] text-on-surface-variant">Teklif Edilen</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="p-4 flex gap-3">
+                        <form asp-action="AcceptOffer" asp-controller="Transfer" method="post" class="flex-1">
+                            <input type="hidden" name="offerId" value="@offer.Id" />
+                            <button type="submit" class="w-full bg-primary text-on-primary-fixed py-3 rounded-xl font-headline font-bold text-sm hover:shadow-[0_0_15px_rgba(142,255,113,0.3)] transition-all active:scale-[0.97]">
+                                <span class="material-symbols-outlined align-middle text-sm mr-1">check</span> KABUL ET
+                            </button>
+                        </form>
+                        <form asp-action="RejectOffer" asp-controller="Transfer" method="post" class="flex-1">
+                            <input type="hidden" name="offerId" value="@offer.Id" />
+                            <button type="submit" class="w-full bg-error/10 text-error border border-error/20 py-3 rounded-xl font-headline font-bold text-sm hover:bg-error/20 transition-all active:scale-[0.97]">
+                                <span class="material-symbols-outlined align-middle text-sm mr-1">close</span> REDDET
+                            </button>
+                        </form>
+                        <button type="button" onclick="toggleCounter(@offer.Id)" class="flex-1 bg-surface-container-highest text-tertiary border border-tertiary/20 py-3 rounded-xl font-headline font-bold text-sm hover:bg-tertiary/10 transition-all active:scale-[0.97]">
+                            <span class="material-symbols-outlined align-middle text-sm mr-1">handshake</span> PAZARLIK
+                        </button>
+                    </div>
+
+                    <!-- Counter-Offer Section (hidden by default) -->
+                    <div id="counter-@offer.Id" class="counter-section px-4 pb-4">
+                        <form asp-action="CounterOffer" asp-controller="Transfer" method="post" class="flex gap-3 items-end">
+                            <input type="hidden" name="offerId" value="@offer.Id" />
+                            <div class="flex-1">
+                                <label class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider block mb-1">Talep Ettiğiniz Miktar (€)</label>
+                                <input type="number" name="counterAmount" step="100000" min="@((int)offer.OfferedFee)"
+                                       value="@((int)(offer.OfferedFee * 1.15m))"
+                                       class="w-full bg-surface-container border border-outline-variant/30 text-on-surface font-headline font-bold rounded-xl px-4 py-3 focus:outline-none focus:border-tertiary transition-colors" />
+                                <span class="font-label text-[9px] text-on-surface-variant mt-1 block">Oyuncu değeri: @offer.Player?.Value.ToString("N0") € • Max kabul: ~@((offer.Player?.Value * 1.3m ?? 0).ToString("N0")) €</span>
+                            </div>
+                            <button type="submit" class="bg-tertiary text-on-tertiary-fixed px-6 py-3 rounded-xl font-headline font-bold text-sm hover:shadow-[0_0_15px_rgba(136,246,255,0.3)] transition-all active:scale-[0.97] whitespace-nowrap">
+                                GÖNDER
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</main>
+
+<div class="fixed top-0 left-0 w-full h-screen pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 blur-[120px] rounded-full"></div>
+    <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-tertiary/5 blur-[120px] rounded-full"></div>
+</div>
+
+@section Scripts {
+<script>
+    function toggleCounter(id) {
+        const section = document.getElementById('counter-' + id);
+        section.classList.toggle('open');
+    }
+</script>
+}

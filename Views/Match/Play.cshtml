@@ -1,0 +1,1010 @@
+@model AltLigMenajer.Models.MatchViewModel
+@{
+    Layout = null; // Standalone page, no bottom navbar
+}
+<!DOCTYPE html>
+<html class="dark" lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>CANLI MAÇ — @Model.HomeTeam.Name vs @Model.AwayTeam.Name</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#767575",
+                        "secondary": "#e5e2e1",
+                        "surface-container-highest": "#262626",
+                        "on-surface": "#ffffff",
+                        "on-primary-container": "#0b5800",
+                        "tertiary": "#88f6ff",
+                        "error": "#ff7351",
+                        "surface": "#0e0e0e",
+                        "surface-container": "#1a1a1a",
+                        "primary-container": "#2ff801",
+                        "surface-bright": "#2c2c2c",
+                        "primary-dim": "#2be800",
+                        "outline-variant": "#484847",
+                        "primary": "#8eff71",
+                        "background": "#0e0e0e",
+                        "surface-dim": "#0e0e0e",
+                        "surface-container-high": "#20201f",
+                        "on-primary-fixed": "#064200",
+                        "on-primary": "#0d6100",
+                        "on-surface-variant": "#adaaaa",
+                        "surface-container-low": "#131313",
+                        "surface-container-lowest": "#000000",
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Lexend"],
+                        "clock": ["Orbitron"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { min-height: 100dvh; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #484847; border-radius: 10px; }
+
+        @@keyframes goal-flash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(142, 255, 113, 0.15); }
+        }
+        .goal-flash { animation: goal-flash 0.4s ease-in-out 3; }
+
+        @@keyframes score-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+        .score-pop { animation: score-pop 0.5s ease-out; }
+
+        @@keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(142, 255, 113, 0.2); }
+            50% { box-shadow: 0 0 35px rgba(142, 255, 113, 0.5); }
+        }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+        @@keyframes slide-in {
+            from { transform: translateX(40px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in { animation: slide-in 0.3s ease-out; }
+
+        @@keyframes fade-in {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .fade-in { animation: fade-in 0.4s ease-out; }
+
+        .commentary-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #484847 transparent;
+        }
+
+        .player-card-selected {
+            outline: 2px solid #8eff71;
+            outline-offset: 2px;
+            background: rgba(142, 255, 113, 0.1) !important;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary-fixed">
+
+    <!-- Background Effects -->
+    <div class="fixed inset-0 pointer-events-none -z-10">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 blur-[150px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-primary/3 blur-[120px]"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-error/3 blur-[120px]"></div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col min-h-screen">
+
+        <!-- TOP: HALF INDICATOR -->
+        <div class="text-center mb-2">
+            <span id="halfLabel" class="font-label text-[10px] text-primary font-bold uppercase tracking-[0.3em] bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
+                1. YARI
+            </span>
+        </div>
+
+        <!-- CLOCK -->
+        <div class="text-center mb-6">
+            <div class="inline-block relative">
+                <div id="matchClock" class="font-clock font-black text-7xl md:text-8xl text-on-surface tracking-wider tabular-nums">
+                    00:00
+                </div>
+                <div class="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+            </div>
+        </div>
+
+        <!-- SCOREBOARD -->
+        <div class="flex items-center justify-center gap-4 md:gap-8 mb-6">
+            <!-- Home Team -->
+            <div class="text-right flex-1">
+                <h2 class="font-headline font-bold text-xl md:text-2xl text-on-surface uppercase tracking-tight truncate">@Model.HomeTeam.Name</h2>
+                <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">OVR @Model.HomeOvr</span>
+            </div>
+            <!-- Score -->
+            <div class="flex items-center gap-3 bg-surface-container-high px-6 py-3 rounded-2xl border border-outline-variant/20 shadow-lg">
+                <span id="homeScore" class="font-clock font-black text-4xl md:text-5xl text-on-surface tabular-nums">0</span>
+                <span class="font-headline font-light text-3xl text-outline-variant mx-1">—</span>
+                <span id="awayScore" class="font-clock font-black text-4xl md:text-5xl text-on-surface tabular-nums">0</span>
+            </div>
+            <!-- Away Team -->
+            <div class="text-left flex-1">
+                <h2 class="font-headline font-bold text-xl md:text-2xl text-on-surface uppercase tracking-tight truncate">@Model.AwayTeam.Name</h2>
+                <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">OVR @Model.AwayOvr</span>
+            </div>
+        </div>
+
+        <!-- MATCH STATS BAR -->
+        <div class="flex items-center gap-2 mb-6 px-2">
+            <div class="flex-1 h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+                <div id="possessionBar" class="h-full bg-gradient-to-r from-primary to-primary-dim rounded-full transition-all duration-500" style="width:50%"></div>
+            </div>
+            <span class="font-label text-[9px] text-on-surface-variant uppercase tracking-wider whitespace-nowrap">TOPa SAHİP OLMA</span>
+        </div>
+
+        <!-- MIDDLE: TWO COLUMNS (Commentary + Squad) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 mb-4 min-h-0">
+
+            <!-- LIVE COMMENTARY -->
+            <div class="lg:col-span-7 flex flex-col bg-surface-container rounded-2xl border border-outline-variant/10 overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3 border-b border-outline-variant/10 bg-surface-container-high/50">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                        <h3 class="font-label text-xs font-bold text-on-surface uppercase tracking-[0.2em]">CANLI ANLATIM</h3>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant text-lg">mic</span>
+                </div>
+                <div id="commentaryLog" class="flex-1 overflow-y-auto commentary-scroll px-5 py-3 space-y-2 max-h-[350px]">
+                    <div class="text-center text-on-surface-variant text-sm py-8 font-label tracking-wider">
+                        <span class="material-symbols-outlined text-3xl block mb-2 text-outline-variant">sports_soccer</span>
+                        Maç başlamak üzere...
+                    </div>
+                </div>
+            </div>
+
+            <!-- SQUAD & SUBS PANEL -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                <!-- Starting 11 -->
+                <div class="flex-1 bg-surface-container rounded-2xl border border-outline-variant/10 overflow-hidden flex flex-col">
+                    <div class="flex items-center justify-between px-5 py-3 border-b border-outline-variant/10 bg-surface-container-high/50">
+                        <h3 class="font-label text-xs font-bold text-on-surface uppercase tracking-[0.2em]">İLK 11</h3>
+                        <span class="font-label text-[10px] text-primary font-bold">@Model.HomeTeam.Formation</span>
+                    </div>
+                    <div id="startersPanel" class="flex-1 overflow-y-auto px-3 py-2 space-y-1 max-h-[180px]">
+                        @foreach (var p in Model.HomeStarters)
+                        {
+                            <div class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-surface-container-high/50 transition-colors" data-player-id="@p.Id">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-label text-[9px] text-primary font-bold w-6">@p.Position</span>
+                                    <span class="font-body text-sm text-on-surface font-medium">@p.Name</span>
+                                </div>
+                                <span class="font-headline font-bold text-sm text-on-surface-variant">@p.Ovr</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Sub Button -->
+                <button id="subButton" onclick="openSubModal()"
+                        class="w-full flex items-center justify-center gap-3 bg-surface-container-high hover:bg-surface-bright border border-outline-variant/20 text-on-surface px-5 py-3.5 rounded-2xl font-headline font-bold text-sm transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-primary">swap_horiz</span>
+                    DEĞİŞİKLİK YAP
+                    <span id="subsBadge" class="bg-primary/15 text-primary text-xs font-bold px-2.5 py-0.5 rounded-full border border-primary/20">3/3</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MENTALITY + SPEED CONTROLS -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-2">
+            <!-- Mentality Selector -->
+            <div class="flex items-center gap-2">
+                <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">TAKTİK:</span>
+                <button onclick="setMentality('defensive')" id="mentality-defensive" class="mentality-btn px-3 py-1.5 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">shield</span> SAVUNMA
+                </button>
+                <button onclick="setMentality('balanced')" id="mentality-balanced" class="mentality-btn px-3 py-1.5 rounded-lg text-xs font-bold font-label border border-primary/40 text-primary bg-primary/10 transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">balance</span> DENGELİ
+                </button>
+                <button onclick="setMentality('attacking')" id="mentality-attacking" class="mentality-btn px-3 py-1.5 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">swords</span> HÜCUM
+                </button>
+            </div>
+            <!-- Speed Controls -->
+            <div class="flex items-center gap-2">
+                <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">HIZ:</span>
+                <button onclick="setSpeed(1000)" id="speed-slow" class="speed-btn px-3 py-1 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-colors">0.5×</button>
+                <button onclick="setSpeed(700)" id="speed-normal" class="speed-btn px-3 py-1 rounded-lg text-xs font-bold font-label border border-primary/40 text-primary bg-primary/10 transition-colors">1×</button>
+                <button onclick="setSpeed(400)" id="speed-fast" class="speed-btn px-3 py-1 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-colors">2×</button>
+                <button onclick="setSpeed(200)" id="speed-ultra" class="speed-btn px-3 py-1 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-colors">4×</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== HALF TIME OVERLAY ============== -->
+    <div id="halfTimeOverlay" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="bg-surface-container-high border border-outline-variant/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.8)] max-w-md w-full mx-4 overflow-hidden fade-in">
+                <div class="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-8 text-center border-b border-outline-variant/20">
+                    <span class="font-label text-[10px] text-primary font-bold uppercase tracking-[0.3em] block mb-2">DEVRE ARASI</span>
+                    <div class="font-clock font-black text-5xl text-on-surface mb-1">45:00</div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-headline font-bold text-on-surface uppercase truncate flex-1 text-right pr-3">@Model.HomeTeam.Name</span>
+                        <div class="flex items-center gap-2 bg-surface-container-highest px-4 py-2 rounded-xl">
+                            <span id="htHomeScore" class="font-clock font-bold text-2xl text-on-surface">0</span>
+                            <span class="text-outline-variant">—</span>
+                            <span id="htAwayScore" class="font-clock font-bold text-2xl text-on-surface">0</span>
+                        </div>
+                        <span class="font-headline font-bold text-on-surface uppercase truncate flex-1 text-left pl-3">@Model.AwayTeam.Name</span>
+                    </div>
+                    <!-- HT Stats -->
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Şutlar</span><span id="htShots" class="font-bold text-on-surface">0 - 0</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">İsabetli Şutlar</span><span id="htShotsOnTarget" class="font-bold text-on-surface">0 - 0</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Fauller</span><span id="htFouls" class="font-bold text-on-surface">0 - 0</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Sarı Kartlar</span><span id="htYellows" class="font-bold text-on-surface">0 - 0</span></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-surface-container/50 border-t border-outline-variant/10">
+                    <button onclick="startSecondHalf()" class="w-full bg-primary text-on-primary-fixed px-6 py-4 rounded-xl font-headline font-black text-lg hover:shadow-[0_0_25px_rgba(142,255,113,0.4)] transition-all active:scale-[0.97]">
+                        İKİNCİ YARIYA BAŞLA <span class="material-symbols-outlined align-middle">play_arrow</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== FULL TIME OVERLAY ============== -->
+    <div id="fullTimeOverlay" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-md"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="bg-surface-container-high border border-outline-variant/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.8)] max-w-md w-full mx-4 overflow-hidden fade-in">
+                <div class="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-8 text-center border-b border-outline-variant/20">
+                    <span class="font-label text-[10px] text-error font-bold uppercase tracking-[0.3em] block mb-2">MAÇ SONU</span>
+                    <div class="font-clock font-black text-5xl text-on-surface mb-1">90:00</div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-headline font-bold text-on-surface uppercase truncate flex-1 text-right pr-3">@Model.HomeTeam.Name</span>
+                        <div class="flex items-center gap-2 bg-surface-container-highest px-4 py-2 rounded-xl">
+                            <span id="ftHomeScore" class="font-clock font-bold text-3xl text-on-surface">0</span>
+                            <span class="text-outline-variant text-2xl">—</span>
+                            <span id="ftAwayScore" class="font-clock font-bold text-3xl text-on-surface">0</span>
+                        </div>
+                        <span class="font-headline font-bold text-on-surface uppercase truncate flex-1 text-left pl-3">@Model.AwayTeam.Name</span>
+                    </div>
+                    <div id="ftResultLabel" class="text-center font-headline font-black text-2xl text-primary uppercase tracking-wider"></div>
+                    <!-- FT Stats -->
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Şutlar</span><span id="ftShots" class="font-bold text-on-surface">0 - 0</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">İsabetli Şutlar</span><span id="ftShotsOnTarget" class="font-bold text-on-surface">0 - 0</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Fauller</span><span id="ftFouls" class="font-bold text-on-surface">0 - 0</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Sarı Kartlar</span><span id="ftYellows" class="font-bold text-on-surface">0 - 0</span></div>
+                    </div>
+                    <!-- Goal Scorers -->
+                    <div id="ftGoalScorers" class="border-t border-outline-variant/10 pt-3 space-y-1"></div>
+                </div>
+                <div class="p-4 bg-surface-container/50 border-t border-outline-variant/10">
+                    <button onclick="endMatch()" id="endMatchBtn" class="w-full bg-primary text-on-primary-fixed px-6 py-4 rounded-xl font-headline font-black text-lg hover:shadow-[0_0_25px_rgba(142,255,113,0.4)] transition-all active:scale-[0.97]">
+                        MAÇI BİTİR <span class="material-symbols-outlined align-middle">flag</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== SUBSTITUTION MODAL ============== -->
+    <div id="subModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSubModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="bg-surface-container-high border border-outline-variant/30 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.8)] max-w-2xl w-full mx-4 overflow-hidden fade-in max-h-[85vh] flex flex-col">
+                <div class="bg-gradient-to-r from-primary/20 to-transparent p-5 border-b border-outline-variant/20 flex justify-between items-center flex-shrink-0">
+                    <div>
+                        <h2 class="font-headline font-black text-xl text-on-surface tracking-tight">DEĞİŞİKLİK YAP</h2>
+                        <p class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">Sahadan çıkacak ve girecek oyuncuyu seçin</p>
+                    </div>
+                    <button onclick="closeSubModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-highest hover:bg-error/20 hover:text-error transition-colors">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+                <div class="p-5 grid grid-cols-2 gap-4 overflow-y-auto flex-1">
+                    <!-- OUT Column -->
+                    <div>
+                        <h4 class="font-label text-[10px] text-error font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">arrow_upward</span> ÇIKACAK
+                        </h4>
+                        <div id="subOutList" class="space-y-1"></div>
+                    </div>
+                    <!-- IN Column -->
+                    <div>
+                        <h4 class="font-label text-[10px] text-primary font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">arrow_downward</span> GİRECEK
+                        </h4>
+                        <div id="subInList" class="space-y-1"></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-surface-container/50 border-t border-outline-variant/10 flex gap-3 flex-shrink-0">
+                    <button onclick="closeSubModal()" class="flex-1 bg-surface-container-highest hover:bg-surface-bright border border-outline-variant/20 text-on-surface font-headline font-bold py-3 rounded-xl transition-colors">
+                        İptal
+                    </button>
+                    <button onclick="confirmSub()" id="confirmSubBtn" disabled class="flex-1 bg-primary/30 text-on-surface font-headline font-bold py-3 rounded-xl transition-all cursor-not-allowed">
+                        Onayla
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== JAVASCRIPT MATCH ENGINE ============== -->
+    <script>
+        // ── Data from server (camelCase for JS) ──
+        const fixtureId = @Model.Fixture.Id;
+        const homeTeamName = "@Model.HomeTeam.Name";
+        const awayTeamName = "@Model.AwayTeam.Name";
+        const homeOvr = @Model.HomeOvr;
+        const awayOvr = @Model.AwayOvr;
+
+        // Use JsonSerializerOptions with camelCase policy
+        @{
+            var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+        }
+        let homeStarters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.HomeStarters.Select(p => new { p.Id, p.Name, p.Position, p.Ovr }), jsonOpts));
+        let homeBench = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.HomeBench.Select(p => new { p.Id, p.Name, p.Position, p.Ovr }), jsonOpts));
+        let awayStarters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AwayStarters.Select(p => new { p.Id, p.Name, p.Position, p.Ovr }), jsonOpts));
+        let awayBench = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AwayBench.Select(p => new { p.Id, p.Name, p.Position, p.Ovr }), jsonOpts));
+
+        // ── Match State ──
+        let minute = 0;
+        let homeGoals = 0;
+        let awayGoals = 0;
+        let matchInterval = null;
+        let tickSpeed = 700;
+        let userSubsRemaining = 3;
+        let aiSubsRemaining = 3;
+        let isPaused = false;
+        let isFirstHalf = true;
+        let matchEnded = false;
+        let currentMentality = 'balanced'; // 'attacking', 'balanced', 'defensive'
+
+        // Stats
+        let stats = {
+            homeShots: 0, awayShots: 0,
+            homeShotsOnTarget: 0, awayShotsOnTarget: 0,
+            homeFouls: 0, awayFouls: 0,
+            homeYellows: 0, awayYellows: 0,
+            homePossession: 50
+        };
+
+        // Goal & assist scorers for backend
+        let homeGoalScorerIds = [];
+        let awayGoalScorerIds = [];
+        let homeAssistIds = [];
+        let awayAssistIds = [];
+        let goalScorerNames = []; // For display
+
+        // Position categories for assist weighting
+        const fwdPos = ['SNT'];
+        const wingMidPos = ['SLO', 'SAO', 'OOS', 'DOS', 'MO'];
+
+        function pickAssister(starters, scorerId) {
+            const candidates = starters.filter(p => p.id !== scorerId);
+            if (candidates.length === 0) return null;
+            // Weight: wingers/mids 70%, forwards 20%, defenders/gk 10%
+            const weighted = candidates.map(p => {
+                let w = 10;
+                if (wingMidPos.includes(p.position)) w = 70;
+                else if (fwdPos.includes(p.position)) w = 20;
+                return { player: p, weight: w };
+            });
+            const total = weighted.reduce((s, x) => s + x.weight, 0);
+            let roll = Math.random() * total;
+            for (const { player, weight } of weighted) {
+                roll -= weight;
+                if (roll <= 0) return player;
+            }
+            return weighted[weighted.length - 1].player;
+        }
+
+        // Sub modal state
+        let selectedOut = null;
+        let selectedIn = null;
+
+        // ── Commentary templates ──
+        const shotComments = [
+            "{player} güzel bir şut çekiyor ama kalecinin ellerinde!",
+            "{player} uzak mesafeden deniyor, top üstten auta gidiyor!",
+            "{player} dönerek vuruyor, kaleci güçlükle kurtarıyor!",
+            "{player} kaleyi yokluyor ama isabet yok!",
+            "{player} sert bir şut çekiyor, top direğe çarpıyor!",
+            "{player} ceza sahasından vuruyor, kaleci müthiş kurtarıyor!",
+        ];
+        const goalComments = [
+            "{player} harika bir vuruşla topu ağlara gönderiyor! GOOOOL!",
+            "{player} kaleciyi avlıyor ve gol! Tribünler yıkılıyor!",
+            "{player} soğukkanlı bitiriyor! GOOOOL!",
+            "{player} müthiş bir gol atıyor! Muhteşem!",
+            "{player} topu sol köşeye yerleştiriyor! GOOOOL!",
+        ];
+        const foulComments = [
+            "{player} sert bir müdahale yapıyor, hakem faul veriyor.",
+            "Sert müdahale! {player} faulü aldı.",
+            "{player} rakibini durdurdu, hakem düdüğü çaldı.",
+        ];
+        const yellowComments = [
+            "{player} sarı kart görüyor! Gereksiz bir fauldü.",
+            "Hakem sarı kartı çıkardı! {player} uyarıldı.",
+            "{player} için sarı kart! Dikkatli olmalı.",
+        ];
+        const nothingComments = [
+            "Oyun orta sahada devam ediyor.",
+            "İki takım da pozisyon arıyor.",
+            "Tempo biraz düşmüş durumda.",
+            "Pas organizasyonu devam ediyor.",
+            "Defans hattı sağlam duruyor.",
+            "Kontrollü bir oyun hakim.",
+        ];
+
+        // ── Helpers ──
+        function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function formatMinute(m) {
+            const mins = String(m).padStart(2, '0');
+            return `${mins}:00`;
+        }
+
+        function addCommentary(minute, text, type = 'normal') {
+            const log = document.getElementById('commentaryLog');
+
+            // Remove placeholder if exists
+            if (minute === 1) log.innerHTML = '';
+
+            const div = document.createElement('div');
+            div.className = 'slide-in flex items-start gap-3 p-2.5 rounded-xl transition-colors';
+
+            let minuteClass = 'bg-surface-container-highest text-on-surface-variant';
+            let textClass = 'text-on-surface-variant text-sm';
+            let icon = '';
+
+            switch(type) {
+                case 'goal':
+                    div.className += ' bg-primary/10 border border-primary/20';
+                    minuteClass = 'bg-primary text-on-primary-fixed';
+                    textClass = 'text-primary font-bold text-sm';
+                    icon = '⚽';
+                    break;
+                case 'yellow':
+                    minuteClass = 'bg-yellow-500/20 text-yellow-400';
+                    textClass = 'text-yellow-400 text-sm';
+                    icon = '🟨';
+                    break;
+                case 'shot':
+                    textClass = 'text-on-surface text-sm';
+                    icon = '🎯';
+                    break;
+                case 'foul':
+                    textClass = 'text-on-surface-variant text-sm';
+                    icon = '⚠️';
+                    break;
+                case 'sub':
+                    div.className += ' bg-tertiary/5 border border-tertiary/10';
+                    minuteClass = 'bg-tertiary/20 text-tertiary';
+                    textClass = 'text-tertiary text-sm';
+                    icon = '🔄';
+                    break;
+                case 'whistle':
+                    div.className += ' bg-surface-container-highest border border-outline-variant/20';
+                    minuteClass = 'bg-on-surface text-surface';
+                    textClass = 'text-on-surface font-bold text-sm';
+                    icon = '📣';
+                    break;
+            }
+
+            div.innerHTML = `
+                <span class="font-label text-[10px] font-bold px-2 py-1 rounded-md ${minuteClass} whitespace-nowrap flex-shrink-0">${minute}'</span>
+                <span class="${textClass}">${icon} ${text}</span>
+            `;
+
+            log.insertBefore(div, log.firstChild);
+        }
+
+        function updateClock() {
+            document.getElementById('matchClock').textContent = formatMinute(minute);
+        }
+
+        function updateScore() {
+            const hEl = document.getElementById('homeScore');
+            const aEl = document.getElementById('awayScore');
+            hEl.textContent = homeGoals;
+            aEl.textContent = awayGoals;
+            hEl.classList.remove('score-pop');
+            aEl.classList.remove('score-pop');
+            void hEl.offsetWidth; // trigger reflow
+            void aEl.offsetWidth;
+        }
+
+        function flashScore(side) {
+            const el = document.getElementById(side === 'home' ? 'homeScore' : 'awayScore');
+            el.classList.add('score-pop');
+            document.body.classList.add('goal-flash');
+            setTimeout(() => document.body.classList.remove('goal-flash'), 1200);
+        }
+
+        function updatePossession() {
+            const totalActions = stats.homeShots + stats.awayShots + stats.homeFouls + stats.awayFouls + 1;
+            const homeActions = stats.homeShots + stats.awayFouls + 1;
+            stats.homePossession = Math.min(70, Math.max(30, Math.round((homeActions / totalActions) * 100)));
+            document.getElementById('possessionBar').style.width = stats.homePossession + '%';
+        }
+
+        // ── Mentality Control ──
+        function setMentality(m) {
+            currentMentality = m;
+            document.querySelectorAll('.mentality-btn').forEach(btn => {
+                btn.className = 'mentality-btn px-3 py-1.5 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1';
+            });
+            const labels = { 'defensive': 'mentality-defensive', 'balanced': 'mentality-balanced', 'attacking': 'mentality-attacking' };
+            const activeBtn = document.getElementById(labels[m]);
+            if (activeBtn) {
+                activeBtn.className = 'mentality-btn px-3 py-1.5 rounded-lg text-xs font-bold font-label border border-primary/40 text-primary bg-primary/10 transition-all flex items-center gap-1';
+            }
+            // Commentary feedback
+            const mentalityNames = { 'defensive': 'SAVUNMA', 'balanced': 'DENGELİ', 'attacking': 'HÜCUM' };
+            if (minute > 0 && !matchEnded) {
+                addCommentary(minute, `Taktik anlayış değiştirildi: ${mentalityNames[m]}`, 'whistle');
+            }
+        }
+
+        // ── Event Generation ──
+        function generateEvent() {
+            const totalOvr = homeOvr + awayOvr;
+            let homeChance = homeOvr / totalOvr;
+
+            // Apply mentality multiplier to home team's chance of being the attacker
+            if (currentMentality === 'attacking') {
+                homeChance = Math.min(0.75, homeChance * 1.3);
+            } else if (currentMentality === 'defensive') {
+                homeChance = Math.max(0.25, homeChance * 0.7);
+            }
+
+            const isHomeEvent = Math.random() < homeChance;
+            const teamName = isHomeEvent ? homeTeamName : awayTeamName;
+            const starters = isHomeEvent ? homeStarters : awayStarters;
+
+            if (starters.length === 0) return;
+
+            const player = rand(starters);
+            let roll = Math.random() * 100;
+
+            // Mentality modifies event thresholds
+            let goalThreshold = 3;
+            let shotOnTargetThreshold = 8;
+            let shotOffTargetThreshold = 14;
+
+            if (isHomeEvent) {
+                // Home (user) team attacking
+                if (currentMentality === 'attacking') {
+                    goalThreshold = 4.5;       // 1.5x goal chance
+                    shotOnTargetThreshold = 11;
+                    shotOffTargetThreshold = 18;
+                } else if (currentMentality === 'defensive') {
+                    goalThreshold = 1.5;       // halved
+                    shotOnTargetThreshold = 5;
+                    shotOffTargetThreshold = 9;
+                }
+            } else {
+                // Away (opponent) team attacking
+                if (currentMentality === 'attacking') {
+                    goalThreshold = 4;         // opponent counter-attack boost
+                    shotOnTargetThreshold = 10;
+                } else if (currentMentality === 'defensive') {
+                    goalThreshold = 1.5;       // opponent suppressed
+                    shotOnTargetThreshold = 4;
+                    shotOffTargetThreshold = 8;
+                }
+            }
+
+            if (roll < goalThreshold) {
+                // GOAL!
+                let assistText = '';
+                if (isHomeEvent) {
+                    homeGoals++;
+                    homeGoalScorerIds.push(player.id);
+                    stats.homeShots++;
+                    stats.homeShotsOnTarget++;
+                    // 70% assist chance
+                    if (Math.random() < 0.7) {
+                        const assister = pickAssister(homeStarters, player.id);
+                        if (assister) {
+                            homeAssistIds.push(assister.id);
+                            assistText = ` (Asist: ${assister.name})`;
+                        }
+                    }
+                    goalScorerNames.push({ minute, name: player.name, team: 'home', assist: assistText });
+                } else {
+                    awayGoals++;
+                    awayGoalScorerIds.push(player.id);
+                    stats.awayShots++;
+                    stats.awayShotsOnTarget++;
+                    // 70% assist chance
+                    if (Math.random() < 0.7) {
+                        const assister = pickAssister(awayStarters, player.id);
+                        if (assister) {
+                            awayAssistIds.push(assister.id);
+                            assistText = ` (Asist: ${assister.name})`;
+                        }
+                    }
+                    goalScorerNames.push({ minute, name: player.name, team: 'away', assist: assistText });
+                }
+                updateScore();
+                flashScore(isHomeEvent ? 'home' : 'away');
+                const comment = rand(goalComments).replace('{player}', player.name) + assistText;
+                addCommentary(minute, `[${teamName}] ${comment}`, 'goal');
+            }
+            else if (roll < shotOnTargetThreshold) {
+                // Shot on target
+                if (isHomeEvent) { stats.homeShots++; stats.homeShotsOnTarget++; }
+                else { stats.awayShots++; stats.awayShotsOnTarget++; }
+                const comment = rand(shotComments).replace('{player}', player.name);
+                addCommentary(minute, `[${teamName}] ${comment}`, 'shot');
+            }
+            else if (roll < shotOffTargetThreshold) {
+                // Shot off target
+                if (isHomeEvent) { stats.homeShots++; }
+                else { stats.awayShots++; }
+                addCommentary(minute, `[${teamName}] ${player.name} şut çekiyor ama top auta gidiyor.`, 'normal');
+            }
+            else if (roll < 20) {
+                // Foul
+                if (isHomeEvent) { stats.homeFouls++; }
+                else { stats.awayFouls++; }
+                const comment = rand(foulComments).replace('{player}', player.name);
+                addCommentary(minute, `[${teamName}] ${comment}`, 'foul');
+            }
+            else if (roll < 23) {
+                // Yellow card
+                if (isHomeEvent) { stats.homeYellows++; stats.homeFouls++; }
+                else { stats.awayYellows++; stats.awayFouls++; }
+                const comment = rand(yellowComments).replace('{player}', player.name);
+                addCommentary(minute, `[${teamName}] ${comment}`, 'yellow');
+            }
+            else if (roll < 30) {
+                // Minor narration
+                addCommentary(minute, rand(nothingComments), 'normal');
+            }
+            // else: nothing happens (silent minute)
+
+            updatePossession();
+        }
+
+        // ── AI Substitution ──
+        function aiSub() {
+            if (aiSubsRemaining <= 0 || awayBench.length === 0) return;
+
+            // Swap lowest OVR starter with highest OVR bench
+            let lowestIdx = 0;
+            for (let i = 1; i < awayStarters.length; i++) {
+                if (awayStarters[i].ovr < awayStarters[lowestIdx].ovr) lowestIdx = i;
+            }
+            let highestIdx = 0;
+            for (let i = 1; i < awayBench.length; i++) {
+                if (awayBench[i].ovr > awayBench[highestIdx].ovr) highestIdx = i;
+            }
+
+            if (awayBench[highestIdx].ovr > awayStarters[lowestIdx].ovr) {
+                const outPlayer = awayStarters[lowestIdx];
+                const inPlayer = awayBench[highestIdx];
+                awayStarters[lowestIdx] = inPlayer;
+                awayBench.splice(highestIdx, 1);
+                awayBench.push(outPlayer);
+                aiSubsRemaining--;
+                addCommentary(minute, `[${awayTeamName}] Değişiklik: ${inPlayer.name} ↔ ${outPlayer.name}`, 'sub');
+            }
+        }
+
+        // ── Tick ──
+        function tick() {
+            if (isPaused || matchEnded) return;
+
+            minute++;
+            updateClock();
+            generateEvent();
+
+            // AI subs
+            if (minute === 46 && Math.random() < 0.5) aiSub();
+            if (minute >= 60 && minute <= 70 && Math.random() < 0.07) aiSub();
+
+            // Half time
+            if (minute === 45 && isFirstHalf) {
+                isPaused = true;
+                isFirstHalf = false;
+                addCommentary(45, 'İlk yarı sona erdi! Devre arası.', 'whistle');
+                showHalfTime();
+                return;
+            }
+
+            // Full time
+            if (minute >= 90) {
+                isPaused = true;
+                matchEnded = true;
+                clearInterval(matchInterval);
+                addCommentary(90, 'Hakem bitiş düdüğünü çaldı! Maç sona erdi.', 'whistle');
+                showFullTime();
+                return;
+            }
+        }
+
+        // ── Speed Control ──
+        function setSpeed(ms) {
+            tickSpeed = ms;
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.className = 'speed-btn px-3 py-1 rounded-lg text-xs font-bold font-label border border-outline-variant/20 text-on-surface-variant hover:text-on-surface transition-colors';
+            });
+            const labels = { 1000: 'speed-slow', 700: 'speed-normal', 400: 'speed-fast', 200: 'speed-ultra' };
+            const activeBtn = document.getElementById(labels[ms]);
+            if (activeBtn) {
+                activeBtn.className = 'speed-btn px-3 py-1 rounded-lg text-xs font-bold font-label border border-primary/40 text-primary bg-primary/10 transition-colors';
+            }
+            if (matchInterval && !isPaused && !matchEnded) {
+                clearInterval(matchInterval);
+                matchInterval = setInterval(tick, tickSpeed);
+            }
+        }
+
+        // ── Half Time ──
+        function showHalfTime() {
+            document.getElementById('htHomeScore').textContent = homeGoals;
+            document.getElementById('htAwayScore').textContent = awayGoals;
+            document.getElementById('htShots').textContent = `${stats.homeShots} - ${stats.awayShots}`;
+            document.getElementById('htShotsOnTarget').textContent = `${stats.homeShotsOnTarget} - ${stats.awayShotsOnTarget}`;
+            document.getElementById('htFouls').textContent = `${stats.homeFouls} - ${stats.awayFouls}`;
+            document.getElementById('htYellows').textContent = `${stats.homeYellows} - ${stats.awayYellows}`;
+            document.getElementById('halfTimeOverlay').classList.remove('hidden');
+        }
+
+        function startSecondHalf() {
+            document.getElementById('halfTimeOverlay').classList.add('hidden');
+            document.getElementById('halfLabel').textContent = '2. YARI';
+            isPaused = false;
+            addCommentary(46, 'İkinci yarı başladı!', 'whistle');
+            matchInterval = setInterval(tick, tickSpeed);
+        }
+
+        // ── Full Time ──
+        function showFullTime() {
+            document.getElementById('ftHomeScore').textContent = homeGoals;
+            document.getElementById('ftAwayScore').textContent = awayGoals;
+            document.getElementById('ftShots').textContent = `${stats.homeShots} - ${stats.awayShots}`;
+            document.getElementById('ftShotsOnTarget').textContent = `${stats.homeShotsOnTarget} - ${stats.awayShotsOnTarget}`;
+            document.getElementById('ftFouls').textContent = `${stats.homeFouls} - ${stats.awayFouls}`;
+            document.getElementById('ftYellows').textContent = `${stats.homeYellows} - ${stats.awayYellows}`;
+
+            // Result label
+            const resultEl = document.getElementById('ftResultLabel');
+            if (homeGoals > awayGoals) resultEl.textContent = 'GALİBİYET!';
+            else if (homeGoals < awayGoals) resultEl.textContent = 'MAĞLUBİYET';
+            else resultEl.textContent = 'BERABERLİK';
+            resultEl.className = 'text-center font-headline font-black text-2xl uppercase tracking-wider ' +
+                (homeGoals > awayGoals ? 'text-primary' : homeGoals < awayGoals ? 'text-error' : 'text-on-surface-variant');
+
+            // Goal scorers list
+            const scorersDiv = document.getElementById('ftGoalScorers');
+            if (goalScorerNames.length > 0) {
+                scorersDiv.innerHTML = '<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mb-2">GOL ATAN OYUNCULAR</p>';
+                goalScorerNames.forEach(g => {
+                    const teamLabel = g.team === 'home' ? homeTeamName : awayTeamName;
+                    scorersDiv.innerHTML += `<div class="flex items-center gap-2 text-sm"><span class="text-primary">⚽</span><span class="text-on-surface">${g.minute}' ${g.name}</span><span class="text-on-surface-variant text-xs">${g.assist || ''}</span><span class="text-on-surface-variant text-xs">(${teamLabel})</span></div>`;
+                });
+            }
+
+            document.getElementById('fullTimeOverlay').classList.remove('hidden');
+        }
+
+        async function endMatch() {
+            const btn = document.getElementById('endMatchBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin align-middle mr-2">progress_activity</span> KAYDEDİLİYOR...';
+
+            try {
+                const response = await fetch('@Url.Action("SaveResult", "Match")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fixtureId: fixtureId,
+                        homeScore: homeGoals,
+                        awayScore: awayGoals,
+                        homeGoalScorerIds: homeGoalScorerIds,
+                        awayGoalScorerIds: awayGoalScorerIds,
+                        homeAssistIds: homeAssistIds,
+                        awayAssistIds: awayAssistIds
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = data.redirectUrl;
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = 'MAÇI BİTİR <span class="material-symbols-outlined align-middle">flag</span>';
+                    alert('Hata: ' + (data.error || 'Bilinmeyen hata'));
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'MAÇI BİTİR <span class="material-symbols-outlined align-middle">flag</span>';
+                alert('Bağlantı hatası: ' + err.message);
+            }
+        }
+
+        // ── Substitution Modal ──
+        function openSubModal() {
+            if (userSubsRemaining <= 0 || isPaused && !isFirstHalf) return;
+
+            // Pause the match
+            if (matchInterval) clearInterval(matchInterval);
+            isPaused = true;
+            selectedOut = null;
+            selectedIn = null;
+
+            // Build out list (starters)
+            const outList = document.getElementById('subOutList');
+            outList.innerHTML = '';
+            homeStarters.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container cursor-pointer hover:bg-surface-bright transition-colors border border-transparent';
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-label text-[9px] text-error font-bold w-6">${p.position}</span>
+                        <span class="font-body text-sm text-on-surface">${p.name}</span>
+                    </div>
+                    <span class="font-headline font-bold text-sm text-on-surface-variant">${p.ovr}</span>
+                `;
+                div.onclick = () => selectOut(idx, div);
+                outList.appendChild(div);
+            });
+
+            // Build in list (bench)
+            const inList = document.getElementById('subInList');
+            inList.innerHTML = '';
+            if (homeBench.length === 0) {
+                inList.innerHTML = '<p class="text-on-surface-variant text-sm p-3">Yedek oyuncu bulunmuyor.</p>';
+            }
+            homeBench.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container cursor-pointer hover:bg-surface-bright transition-colors border border-transparent';
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-label text-[9px] text-primary font-bold w-6">${p.position}</span>
+                        <span class="font-body text-sm text-on-surface">${p.name}</span>
+                    </div>
+                    <span class="font-headline font-bold text-sm text-on-surface-variant">${p.ovr}</span>
+                `;
+                div.onclick = () => selectIn(idx, div);
+                inList.appendChild(div);
+            });
+
+            document.getElementById('subModal').classList.remove('hidden');
+            updateConfirmBtn();
+        }
+
+        function selectOut(idx, el) {
+            document.querySelectorAll('#subOutList > div').forEach(d => d.classList.remove('player-card-selected'));
+            el.classList.add('player-card-selected');
+            selectedOut = idx;
+            updateConfirmBtn();
+        }
+
+        function selectIn(idx, el) {
+            document.querySelectorAll('#subInList > div').forEach(d => d.classList.remove('player-card-selected'));
+            el.classList.add('player-card-selected');
+            selectedIn = idx;
+            updateConfirmBtn();
+        }
+
+        function updateConfirmBtn() {
+            const btn = document.getElementById('confirmSubBtn');
+            if (selectedOut !== null && selectedIn !== null) {
+                btn.disabled = false;
+                btn.className = 'flex-1 bg-primary text-on-primary-fixed font-headline font-bold py-3 rounded-xl transition-all cursor-pointer hover:shadow-[0_0_15px_rgba(142,255,113,0.3)]';
+            } else {
+                btn.disabled = true;
+                btn.className = 'flex-1 bg-primary/30 text-on-surface font-headline font-bold py-3 rounded-xl transition-all cursor-not-allowed';
+            }
+        }
+
+        function confirmSub() {
+            if (selectedOut === null || selectedIn === null) return;
+
+            const outPlayer = homeStarters[selectedOut];
+            const inPlayer = homeBench[selectedIn];
+
+            // Swap
+            homeStarters[selectedOut] = inPlayer;
+            homeBench.splice(selectedIn, 1);
+            homeBench.push(outPlayer);
+
+            userSubsRemaining--;
+
+            // Log
+            addCommentary(minute, `Değişiklik: ${inPlayer.name} ↔ ${outPlayer.name}`, 'sub');
+
+            // Update UI
+            updateStartersPanel();
+            updateSubBadge();
+
+            closeSubModal(true);
+
+            // Resume
+            if (!matchEnded) {
+                isPaused = false;
+                if (matchInterval) clearInterval(matchInterval);
+                matchInterval = setInterval(tick, tickSpeed);
+            }
+        }
+
+        function closeSubModal(fromConfirm = false) {
+            document.getElementById('subModal').classList.add('hidden');
+            // Only auto-resume if NOT called from confirmSub (which handles its own resume)
+            // and NOT during half time / full time / pre-match
+            if (!fromConfirm && !matchEnded && minute > 0 && minute !== 45) {
+                isPaused = false;
+                if (matchInterval) clearInterval(matchInterval);
+                matchInterval = setInterval(tick, tickSpeed);
+            }
+        }
+
+        function updateStartersPanel() {
+            const panel = document.getElementById('startersPanel');
+            panel.innerHTML = '';
+            homeStarters.forEach(p => {
+                panel.innerHTML += `
+                    <div class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-surface-container-high/50 transition-colors" data-player-id="${p.id}">
+                        <div class="flex items-center gap-2">
+                            <span class="font-label text-[9px] text-primary font-bold w-6">${p.position}</span>
+                            <span class="font-body text-sm text-on-surface font-medium">${p.name}</span>
+                        </div>
+                        <span class="font-headline font-bold text-sm text-on-surface-variant">${p.ovr}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function updateSubBadge() {
+            const badge = document.getElementById('subsBadge');
+            badge.textContent = `${userSubsRemaining}/3`;
+            if (userSubsRemaining <= 0) {
+                const btn = document.getElementById('subButton');
+                btn.disabled = true;
+                btn.className = 'w-full flex items-center justify-center gap-3 bg-surface-container border border-outline-variant/10 text-on-surface-variant px-5 py-3.5 rounded-2xl font-headline font-bold text-sm cursor-not-allowed opacity-50';
+                badge.className = 'bg-error/15 text-error text-xs font-bold px-2.5 py-0.5 rounded-full border border-error/20';
+            }
+        }
+
+        // ── Start the match ──
+        function startMatch() {
+            addCommentary(0, 'Hakem düdüğünü çaldı! Maç başladı!', 'whistle');
+            matchInterval = setInterval(tick, tickSpeed);
+        }
+
+        // Auto-start after a brief delay
+        setTimeout(startMatch, 1500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+@model AltLigMenajer.Models.LeagueViewModel
+@{
+    ViewData["Title"] = Model.SelectedTier == 1 ? "Süper Lig" : "TFF 1. Lig";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string leagueName = Model.SelectedTier == 1 ? "SÜPER LİG" : "TFF 1. LİG";
+}
+@section Styles {
+<style>
+.glass-panel { background: rgba(26,26,26,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(72,72,71,0.2); }
+.user-row-highlight { background: linear-gradient(90deg,rgba(142,255,113,0.1) 0%,rgba(142,255,113,0.05) 100%); box-shadow: inset 3px 0 0 0 #8eff71; }
+.promo-zone { background: linear-gradient(90deg,rgba(142,255,113,0.06) 0%,transparent 100%); box-shadow: inset 3px 0 0 0 #2ff801; }
+.relegation-zone { background: linear-gradient(90deg,rgba(255,115,81,0.06) 0%,transparent 100%); box-shadow: inset 3px 0 0 0 #ff7351; }
+.tier-tab { transition: all 0.2s; }
+.tier-tab.active { color: #8eff71; border-bottom: 2px solid #8eff71; }
+.tier-tab:not(.active) { color: #adaaaa; }
+.tier-tab:not(.active):hover { color: #ffffff; }
+</style>
+}
+
+<header class="fixed top-0 z-50 w-full bg-[#0e0e0e] flex items-center px-6 py-4 bg-gradient-to-b from-[#1a1a1a] to-transparent">
+    <div class="flex items-center">
+        <h1 class="font-headline text-lg font-bold uppercase tracking-tighter text-primary">@leagueName</h1>
+    </div>
+    <div class="flex items-center gap-4 ml-auto">
+        <div class="bg-primary/20 border border-primary/30 px-3 py-1 rounded-lg">
+            <span class="font-label text-[10px] text-primary font-bold">HAFTA: @Model.CurrentWeek / 34</span>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 pb-32 px-4 min-h-screen">
+    <!-- League Tier Tabs -->
+    <div class="flex justify-center gap-4 mb-6">
+        <a asp-action="Index" asp-controller="League" asp-route-tier="1"
+           class="tier-tab pb-2 px-4 font-headline font-bold text-sm uppercase tracking-wider @(Model.SelectedTier == 1 ? "active" : "")">
+            🏆 Süper Lig
+        </a>
+        <a asp-action="Index" asp-controller="League" asp-route-tier="2"
+           class="tier-tab pb-2 px-4 font-headline font-bold text-sm uppercase tracking-wider @(Model.SelectedTier == 2 ? "active" : "")">
+            ⚽ TFF 1. Lig
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="flex justify-center gap-8 mb-8 border-b border-outline-variant/10">
+        <a asp-action="Index" asp-controller="League" asp-route-tier="@Model.SelectedTier" class="pb-3 px-2 text-primary font-label font-bold text-xs uppercase tracking-widest border-b-2 border-primary">PUAN DURUMU</a>
+        <a asp-action="Fixtures" asp-controller="League" asp-route-tier="@Model.SelectedTier" class="pb-3 px-2 text-on-surface-variant font-label font-bold text-xs uppercase tracking-widest hover:text-on-surface transition-colors">FİKSTÜR</a>
+        <a asp-action="Stats" asp-controller="League" asp-route-tier="@Model.SelectedTier" class="pb-3 px-2 text-on-surface-variant font-label font-bold text-xs uppercase tracking-widest hover:text-on-surface transition-colors">KRALLIK</a>
+    </nav>
+
+    <section class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container/50 border-b border-outline-variant/20">
+                        <th class="py-4 px-3 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center w-10">#</th>
+                        <th class="py-4 px-3 font-label text-[10px] text-on-surface-variant uppercase font-bold min-w-[140px]">TAKIM</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">OM</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">G</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">B</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">M</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">AG</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">YG</th>
+                        <th class="py-4 px-2 font-label text-[10px] text-on-surface-variant uppercase font-bold text-center">A</th>
+                        <th class="py-4 px-3 font-label text-[10px] text-primary uppercase font-black text-center">P</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                    @{ int rank = 0; }
+                    @foreach (var s in Model.Standings)
+                    {
+                        rank++;
+                        bool isUser = s.Team.Id == Model.ManagerTeamId;
+                        bool isPromoZone = rank <= 3;
+                        bool isRelegationZone = rank >= 16;
+                        string rowClass = isUser ? "user-row-highlight" : isPromoZone ? "promo-zone" : isRelegationZone ? "relegation-zone" : "hover:bg-white/5 transition-colors";
+                        string code = s.Team.Name.Length >= 3 ? s.Team.Name[..3].ToUpper() : s.Team.Name.ToUpper();
+
+                        <tr class="@rowClass">
+                            <td class="py-3 px-3 text-center font-label text-xs @(isUser ? "text-primary font-bold" : isPromoZone ? "text-primary-dim font-bold" : isRelegationZone ? "text-error font-bold" : "text-on-surface-variant")">@rank</td>
+                            <td class="py-3 px-3">
+                                <a asp-action="TeamProfile" asp-controller="League" asp-route-id="@s.Team.Id" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                    <div class="w-6 h-6 @(isUser ? "bg-primary" : "bg-surface-container-highest") flex items-center justify-center rounded-lg @(isUser ? "shadow-[0_0_10px_rgba(142,255,113,0.3)]" : "") border border-outline-variant/20">
+                                        <span class="text-[7px] font-black @(isUser ? "text-on-primary-fixed" : "")">@code</span>
+                                    </div>
+                                    <span class="font-body text-sm @(isUser ? "font-extrabold text-on-surface italic" : "font-semibold") tracking-tight truncate">@s.Team.Name</span>
+                                </a>
+                            </td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium")">@s.Played</td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium")">@s.Won</td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium")">@s.Drawn</td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium")">@s.Lost</td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium text-on-surface-variant")">@s.GoalsFor</td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium text-on-surface-variant")">@s.GoalsAgainst</td>
+                            <td class="py-3 px-2 text-center text-xs @(isUser ? "font-bold" : "font-medium") @(s.GoalDifference > 0 ? "text-primary" : s.GoalDifference < 0 ? "text-error" : "")">@s.GoalDifference</td>
+                            <td class="py-3 px-3 text-center text-sm font-black @(isUser ? "text-primary" : "text-primary")">@s.Points</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="mt-6 flex flex-wrap gap-4 px-2">
+        @if (Model.SelectedTier == 2)
+        {
+            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-primary-fixed"></div><span class="font-label text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">Süper Lig'e Yükselme (İlk 3)</span></div>
+        }
+        else
+        {
+            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-primary-fixed"></div><span class="font-label text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">Şampiyonlar Ligi Bölgesi (İlk 3)</span></div>
+        }
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-error/50"></div><span class="font-label text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">Düşme Hattı (Son 3)</span></div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-primary/30"></div><span class="font-label text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">Senin Takımın</span></div>
+    </div>
+</main>
+
+<div class="fixed top-0 left-0 w-full h-screen pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 blur-[120px] rounded-full"></div>
+    <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-tertiary/5 blur-[120px] rounded-full"></div>
+</div>

@@ -1,0 +1,372 @@
+@model AltLigMenajer.Models.TacticViewModel
+@{
+    ViewData["Title"] = "Taktikler - " + Model.Team.Name;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var managerName = Model.Team.Manager != null ? $"{Model.Team.Manager.FirstName} {Model.Team.Manager.LastName}" : "Yönetici";
+    var currentFormation = string.IsNullOrEmpty(Model.Team.Formation) ? "4-2-3-1" : Model.Team.Formation;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0e0e0e] bg-gradient-to-b from-[#1a1a1a] to-transparent">
+    <div class="flex items-center gap-3">
+        <div>
+            <h1 class="font-headline font-bold text-[#8eff71] tracking-tighter text-xl">@Model.Team.Name</h1>
+            <p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider">@managerName - PRO LICENSE</p>
+        </div>
+    </div>
+    <div class="flex flex-col items-end">
+        <span class="font-label text-xs text-primary font-bold">@Model.Team.Budget.ToString("N0") € • OVR @Model.AverageOvr</span>
+    </div>
+</header>
+
+<main class="pt-24 pb-32 px-4 flex flex-col gap-6">
+    <!-- Tactical Pitch -->
+    <section class="relative w-full max-w-md mx-auto aspect-[3/4] rounded-3xl overflow-hidden border border-outline-variant/30 pitch-pattern shadow-2xl bg-[#0e0e0e]" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 10%, rgba(142, 255, 113, 0.03) 10%, rgba(142, 255, 113, 0.03) 20%);">
+        
+        <!-- Formation Selector Dropdown Overlay -->
+        <div class="absolute top-3 right-3 z-20">
+            <select id="formation-selector" class="bg-surface-container-high border border-primary/40 text-primary font-headline font-bold text-xs rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary shadow-lg cursor-pointer">
+                <option value="4-2-3-1">4-2-3-1</option>
+                <option value="4-3-3">4-3-3</option>
+                <option value="4-4-2">4-4-2</option>
+                <option value="3-5-2">3-5-2</option>
+                <option value="5-3-2">5-3-2</option>
+            </select>
+        </div>
+
+        <!-- Pitch Markings (Half Pitch) -->
+        <div class="absolute inset-0 pointer-events-none opacity-20">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/5 h-1/4 border-b border-x border-on-surface"></div>
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-12 border-b border-x border-on-surface"></div>
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-on-surface rounded-full" style="clip-path: inset(50% 0 0 0); margin-bottom: -4rem;"></div>
+            <div class="absolute bottom-0 left-0 w-full h-[1px] bg-on-surface"></div>
+        </div>
+
+        <!-- Formation CSS Grid (11 Explicit Slots) -->
+        <div id="pitch-container" class="absolute inset-0 px-2 py-6 z-10 transition-all duration-300 grid grid-cols-[repeat(10,1fr)] gap-y-2">
+            @for (int i = 0; i <= 10; i++)
+            {
+                <div class="pitch-slot flex justify-center items-center rounded-xl transition-all" data-slot-index="@i"></div>
+            }
+        </div>
+    </section>
+
+    <!-- Hidden Pool to populate initial layout based on exact DB saved position -->
+    <div id="starters-pool" class="hidden">
+        @foreach (var p in Model.Starters.OrderBy(s => s.PitchPosition ?? 999).ThenByDescending(s => s.Ovr))
+        {
+            <!-- Injecting data-saved-slot so JS knows exactly where to put them -->
+            <div data-saved-slot="@(p.PitchPosition ?? -1)">
+                <partial name="_PlayerCard" model="p" />
+            </div>
+        }
+    </div>
+
+    <!-- Substitutes -->
+    <section>
+        <div class="flex justify-between items-end mb-3">
+            <h3 class="font-headline text-sm font-bold tracking-tight uppercase">YEDEKLER</h3>
+            <span class="font-label text-[10px] text-on-surface-variant" id="sub-count">@Model.Substitutes.Count OYUNCU</span>
+        </div>
+        <div id="bench-container" class="flex overflow-x-auto overflow-y-hidden gap-3 pb-2 min-h-[120px] items-center border border-dashed border-outline-variant/30 rounded-xl p-2 bg-surface-container-low">
+            @foreach (var p in Model.Substitutes)
+            {
+                <partial name="_PlayerCard" model="p" />
+            }
+        </div>
+    </section>
+
+    <!-- Tactical Controls -->
+    <section class="bg-surface-container-low p-5 rounded-3xl border border-outline-variant/20">
+        <h3 class="font-headline text-xs font-bold tracking-widest uppercase mb-4 text-on-surface-variant">TAKIM KOMUTLARI</h3>
+        <div class="space-y-6">
+            
+            <!-- Mentality -->
+            <div>
+                <label class="font-label text-[10px] text-on-surface-variant uppercase mb-2 block">OYUN ANLAYIŞI</label>
+                <div class="grid grid-cols-3 bg-surface-container rounded-xl p-1" id="instruction-toggles">
+                    <button class="instruction-btn py-2 text-[11px] font-label rounded-lg transition-all @(Model.Team.TeamInstruction == "SAVUNMA" ? "bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface")" data-val="SAVUNMA">SAVUNMA</button>
+                    <button class="instruction-btn py-2 text-[11px] font-label rounded-lg transition-all @(Model.Team.TeamInstruction == "DENGELİ" ? "bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface")" data-val="DENGELİ">DENGELİ</button>
+                    <button class="instruction-btn py-2 text-[11px] font-label rounded-lg transition-all @(Model.Team.TeamInstruction == "HÜCUM" ? "bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface")" data-val="HÜCUM">HÜCUM</button>
+                </div>
+            </div>
+
+            <!-- Passing Style -->
+            <div>
+                <label class="font-label text-[10px] text-on-surface-variant uppercase mb-2 block">TOPLA OYNAMA</label>
+                <div class="grid grid-cols-3 bg-surface-container rounded-xl p-1" id="passing-toggles">
+                    <button class="passing-btn py-2 text-[11px] font-label rounded-lg transition-all @(Model.Team.PassingStyle == "KISA PAS" ? "bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface")" data-val="KISA PAS">KISA PAS</button>
+                    <button class="passing-btn py-2 text-[11px] font-label rounded-lg transition-all @(Model.Team.PassingStyle == "KARIŞIK" ? "bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface")" data-val="KARIŞIK">KARIŞIK</button>
+                    <button class="passing-btn py-2 text-[11px] font-label rounded-lg transition-all @(Model.Team.PassingStyle == "UZUN PAS" ? "bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface")" data-val="UZUN PAS">UZUN PAS</button>
+                </div>
+            </div>
+
+            <button id="save-tactic-btn" type="button" class="w-full bg-primary-fixed py-4 rounded-2xl font-headline font-bold text-on-primary-fixed tracking-tight active:scale-95 transition-transform shadow-[0_8px_20px_rgba(142,255,113,0.3)] hover:brightness-110">
+                TAKTİĞİ KAYDET
+            </button>
+        </div>
+    </section>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bench = document.getElementById('bench-container');
+            const pitchContainer = document.getElementById('pitch-container');
+            
+            let currentInstruction = "@Model.Team.TeamInstruction";
+            let currentPassing = "@Model.Team.PassingStyle";
+            let currentFormation = "@currentFormation";
+
+            const formationSelector = document.getElementById('formation-selector');
+            formationSelector.value = currentFormation;
+
+            // Define Explicit Grid Maps for 11 slots (0 to 10)
+            const formationMaps = {
+                "4-2-3-1": { rows: 5, slots: [
+                    { row: 1, col: "1 / 11" }, // SNT (0)
+                    { row: 2, col: "1 / 4" }, { row: 2, col: "4 / 8" }, { row: 2, col: "8 / 11" }, // AMs (1,2,3)
+                    { row: 3, col: "1 / 6" }, { row: 3, col: "6 / 11" }, // CDMs (4,5)
+                    { row: 4, col: "1 / 3" }, { row: 4, col: "3 / 6" }, { row: 4, col: "6 / 9" }, { row: 4, col: "9 / 11" }, // DEFs (6,7,8,9)
+                    { row: 5, col: "1 / 11" } // GK (10)
+                ]},
+                "4-3-3": { rows: 4, slots: [
+                    { row: 1, col: "1 / 4" }, { row: 1, col: "4 / 8" }, { row: 1, col: "8 / 11" }, // FWDs (0,1,2)
+                    { row: 2, col: "1 / 4" }, { row: 2, col: "4 / 8" }, { row: 2, col: "8 / 11" }, // MIDs (3,4,5)
+                    { row: 3, col: "1 / 3" }, { row: 3, col: "3 / 6" }, { row: 3, col: "6 / 9" }, { row: 3, col: "9 / 11" }, // DEFs (6,7,8,9)
+                    { row: 4, col: "1 / 11" } // GK (10)
+                ]},
+                "4-4-2": { rows: 4, slots: [
+                    { row: 1, col: "1 / 6" }, { row: 1, col: "6 / 11" }, // SNTs (0,1)
+                    { row: 2, col: "1 / 3" }, { row: 2, col: "3 / 6" }, { row: 2, col: "6 / 9" }, { row: 2, col: "9 / 11" }, // MIDs (2,3,4,5)
+                    { row: 3, col: "1 / 3" }, { row: 3, col: "3 / 6" }, { row: 3, col: "6 / 9" }, { row: 3, col: "9 / 11" }, // DEFs (6,7,8,9)
+                    { row: 4, col: "1 / 11" } // GK (10)
+                ]},
+                "3-5-2": { rows: 4, slots: [
+                    { row: 1, col: "1 / 6" }, { row: 1, col: "6 / 11" }, // SNTs (0,1)
+                    { row: 2, col: "1 / 3" }, { row: 2, col: "3 / 5" }, { row: 2, col: "5 / 7" }, { row: 2, col: "7 / 9" }, { row: 2, col: "9 / 11" }, // MIDs (2,3,4,5,6)
+                    { row: 3, col: "1 / 4" }, { row: 3, col: "4 / 8" }, { row: 3, col: "8 / 11" }, // DEFs (7,8,9)
+                    { row: 4, col: "1 / 11" } // GK (10)
+                ]},
+                "5-3-2": { rows: 4, slots: [
+                    { row: 1, col: "1 / 6" }, { row: 1, col: "6 / 11" }, // SNTs (0,1)
+                    { row: 2, col: "1 / 4" }, { row: 2, col: "4 / 8" }, { row: 2, col: "8 / 11" }, // MIDs (2,3,4)
+                    { row: 3, col: "1 / 3" }, { row: 3, col: "3 / 5" }, { row: 3, col: "5 / 7" }, { row: 3, col: "7 / 9" }, { row: 3, col: "9 / 11" }, // DEFs (5,6,7,8,9)
+                    { row: 4, col: "1 / 11" } // GK (10)
+                ]}
+            };
+
+            function applyFormationGrid(formationKey) {
+                const map = formationMaps[formationKey] || formationMaps["4-2-3-1"];
+                pitchContainer.style.gridTemplateRows = `repeat(${map.rows}, 1fr)`;
+                
+                for (let i = 0; i <= 10; i++) {
+                    const slotEl = document.querySelector(`.pitch-slot[data-slot-index="${i}"]`);
+                    const slotMap = map.slots[i];
+                    if (slotEl && slotMap) {
+                        slotEl.style.gridRow = slotMap.row;
+                        slotEl.style.gridColumn = slotMap.col;
+                    }
+                }
+            }
+
+            // Initial Load Players into Exact Slots
+            function initializeStarters() {
+                const pool = document.getElementById('starters-pool');
+                const wrappers = Array.from(pool.children);
+                
+                wrappers.forEach(wrapper => {
+                    const savedSlotIndex = parseInt(wrapper.getAttribute('data-saved-slot'));
+                    const card = wrapper.querySelector('.player-card');
+                    
+                    if (savedSlotIndex >= 0 && savedSlotIndex <= 10) {
+                        const targetSlot = document.querySelector(`.pitch-slot[data-slot-index="${savedSlotIndex}"]`);
+                        if (targetSlot && targetSlot.children.length === 0) {
+                            targetSlot.appendChild(card);
+                            return;
+                        }
+                    }
+                    
+                    // Fallback: If slot taken or invalid, find first empty slot
+                    for (let i = 0; i <= 10; i++) {
+                        const slot = document.querySelector(`.pitch-slot[data-slot-index="${i}"]`);
+                        if (slot && slot.children.length === 0) {
+                            slot.appendChild(card);
+                            return;
+                        }
+                    }
+                    
+                    // Super fallback: send to bench
+                    bench.appendChild(card);
+                });
+            }
+
+            applyFormationGrid(currentFormation);
+            initializeStarters();
+
+            formationSelector.addEventListener('change', (e) => {
+                currentFormation = e.target.value;
+                applyFormationGrid(currentFormation);
+            });
+
+            function updateSubCount() {
+                const count = bench.querySelectorAll('.player-card').length;
+                document.getElementById('sub-count').innerText = count + ' OYUNCU';
+            }
+
+            // Position group mapping per formation
+            const slotGroupMaps = {
+                "4-2-3-1": { 0:'ATT', 1:'ATT', 2:'ATT', 3:'ATT', 4:'MID', 5:'MID', 6:'DEF', 7:'DEF', 8:'DEF', 9:'DEF', 10:'GK' },
+                "4-3-3":   { 0:'ATT', 1:'ATT', 2:'ATT', 3:'MID', 4:'MID', 5:'MID', 6:'DEF', 7:'DEF', 8:'DEF', 9:'DEF', 10:'GK' },
+                "4-4-2":   { 0:'ATT', 1:'ATT', 2:'MID', 3:'MID', 4:'MID', 5:'MID', 6:'DEF', 7:'DEF', 8:'DEF', 9:'DEF', 10:'GK' },
+                "3-5-2":   { 0:'ATT', 1:'ATT', 2:'MID', 3:'MID', 4:'MID', 5:'MID', 6:'MID', 7:'DEF', 8:'DEF', 9:'DEF', 10:'GK' },
+                "5-3-2":   { 0:'ATT', 1:'ATT', 2:'MID', 3:'MID', 4:'MID', 5:'DEF', 6:'DEF', 7:'DEF', 8:'DEF', 9:'DEF', 10:'GK' },
+            };
+
+            function getSlotGroup(slotIndex) {
+                const map = slotGroupMaps[currentFormation] || slotGroupMaps["4-2-3-1"];
+                return map[slotIndex] || 'MID';
+            }
+
+            // SortableJS Configuration
+            const sortableOptions = {
+                group: 'squad',
+                animation: 200,
+                ghostClass: 'opacity-50',
+                scroll: true,             
+                forceFallback: true,      
+                scrollSensitivity: 80,    
+                bubbleScroll: true,
+                filter: '[data-injured="true"]',
+                onMove: function(evt) {
+                    // Block injured players from being moved to pitch slots
+                    if (evt.dragged.getAttribute('data-injured') === 'true' && evt.to.classList.contains('pitch-slot')) {
+                        showToast('Sakat oyuncular ilk 11\'e alınamaz!', 'bg-error');
+                        return false;
+                    }
+                    // ── Position group restriction ──
+                    if (evt.to.classList.contains('pitch-slot')) {
+                        const slotIndex = parseInt(evt.to.getAttribute('data-slot-index'));
+                        const playerGroup = evt.dragged.getAttribute('data-pos-group');
+                        const slotGroup = getSlotGroup(slotIndex);
+                        if (playerGroup && slotGroup && playerGroup !== slotGroup) {
+                            const groupLabels = { 'GK': 'Kaleci', 'DEF': 'Defans', 'MID': 'Orta Saha', 'ATT': 'Hücum' };
+                            showToast(`Bu mevkiye yalnızca ${groupLabels[slotGroup] || slotGroup} oyuncuları yerleştirilebilir!`, 'bg-error');
+                            return false;
+                        }
+                    }
+                },
+                onAdd: function(evt) {
+                    const targetSlot = evt.to;
+                    
+                    // If target is a pitch slot and already has a card, Swap them!
+                    if (targetSlot.classList.contains('pitch-slot')) {
+                        const cards = Array.from(targetSlot.querySelectorAll('.player-card'));
+                        if (cards.length > 1) {
+                            const oldCard = cards.find(c => c !== evt.item);
+                            if (oldCard) {
+                                evt.from.appendChild(oldCard);
+                            }
+                        }
+                    }
+                    
+                    // Ensure max 11 on pitch overall (edge case safety)
+                    let totalOnPitch = 0;
+                    document.querySelectorAll('.pitch-slot').forEach(slot => {
+                        totalOnPitch += slot.querySelectorAll('.player-card').length;
+                    });
+                    
+                    if (totalOnPitch > 11) {
+                        evt.from.appendChild(evt.item);
+                        showToast('Sahada en fazla 11 oyuncu olabilir!', 'bg-error');
+                    }
+                    
+                    updateSubCount();
+                },
+                onSort: function() { updateSubCount(); }
+            };
+
+            // Initialize Bench
+            new Sortable(bench, sortableOptions);
+
+            // Initialize all 11 Pitch Slots individually
+            document.querySelectorAll('.pitch-slot').forEach(slot => {
+                new Sortable(slot, sortableOptions);
+            });
+
+            function showToast(message, colorClass = 'bg-primary') {
+                const toast = document.createElement('div');
+                toast.className = `fixed top-5 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-full font-headline font-bold shadow-[0_0_20px_rgba(0,0,0,0.5)] z-[100] transition-opacity duration-300 ${colorClass}`;
+                if(colorClass === 'bg-primary') toast.classList.add('text-on-primary-fixed');
+                toast.innerText = message;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            // UI Toggles
+            const instructionBtns = document.querySelectorAll('.instruction-btn');
+            instructionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    instructionBtns.forEach(b => b.className = "instruction-btn py-2 text-[11px] font-label rounded-lg transition-all text-on-surface-variant hover:text-on-surface");
+                    btn.className = "instruction-btn py-2 text-[11px] font-label rounded-lg transition-all bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20";
+                    currentInstruction = btn.getAttribute('data-val');
+                });
+            });
+
+            const passingBtns = document.querySelectorAll('.passing-btn');
+            passingBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    passingBtns.forEach(b => b.className = "passing-btn py-2 text-[11px] font-label rounded-lg transition-all text-on-surface-variant hover:text-on-surface");
+                    btn.className = "passing-btn py-2 text-[11px] font-label rounded-lg transition-all bg-primary text-on-primary-fixed font-bold shadow-lg shadow-primary/20";
+                    currentPassing = btn.getAttribute('data-val');
+                });
+            });
+
+            // Save Tactic with Explicit Slots Data
+            document.getElementById('save-tactic-btn').addEventListener('click', function () {
+                const playerPositions = [];
+                
+                for (let i = 0; i <= 10; i++) {
+                    const slot = document.querySelector(`.pitch-slot[data-slot-index="${i}"]`);
+                    const card = slot.querySelector('.player-card');
+                    if (card) {
+                        playerPositions.push({
+                            playerId: parseInt(card.getAttribute('data-player-id')),
+                            pitchPosition: i
+                        });
+                    }
+                }
+
+                if (playerPositions.length !== 11) {
+                    showToast("İlk 11'de tam olarak 11 oyuncu olmalıdır!", 'bg-error');
+                    return;
+                }
+
+                fetch('@Url.Action("SaveTactic", "Tactic")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerPositions: playerPositions,
+                        instruction: currentInstruction,
+                        passingStyle: currentPassing,
+                        formation: currentFormation
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) showToast('Taktik başarıyla kaydedildi!', 'bg-primary');
+                    else showToast(data.error || "Kayıt sırasında bir hata oluştu.", 'bg-error');
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("Ağ bağlantısı hatası.", 'bg-error');
+                });
+            });
+        });
+    </script>
+}

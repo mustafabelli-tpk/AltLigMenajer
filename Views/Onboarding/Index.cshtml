@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "Yeni Kariyer";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#121212]">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[150px] pointer-events-none rounded-full"></div>
+    <div class="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 blur-[150px] pointer-events-none rounded-full"></div>
+
+    <div class="text-center z-10 p-8 rounded-2xl bg-surface-container/50 backdrop-blur-xl border border-outline-variant/20 shadow-2xl max-w-2xl w-full">
+        <h1 class="font-headline font-black text-6xl text-on-surface uppercase tracking-tighter mb-4 drop-shadow-lg">
+            ALTLİG <span class="text-primary">MENAJER</span>
+        </h1>
+        <p class="font-body text-on-surface-variant text-lg mb-12">Türkiye'nin alt liglerinde zirveye uzanan serüvenine başla.</p>
+        
+        <a href="@Url.Action("CreateProfile", "Onboarding")" class="inline-flex items-center justify-center gap-3 bg-primary text-on-primary-fixed px-12 py-6 rounded-xl font-headline font-black text-2xl uppercase hover:shadow-[0_0_30px_rgba(142,255,113,0.5)] transition-all active:scale-95 duration-300">
+            YENİ KARİYER BAŞLAT <span class="material-symbols-outlined font-black text-3xl">play_arrow</span>
+        </a>
+    </div>
+</div>

@@ -1,0 +1,133 @@
+@model IEnumerable<AltLigMenajer.Models.Team>
+
+@{
+    ViewData["Title"] = "Takım Seçimi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int managerStars = (int)(ViewBag.ManagerStarRating ?? 1);
+}
+
+<div class="min-h-screen flex flex-col relative overflow-hidden bg-[#121212] pt-20 pb-12 px-6">
+    <div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[150px] pointer-events-none rounded-full"></div>
+
+    <div class="z-10 max-w-7xl mx-auto w-full">
+        <div class="text-center mb-10">
+            <h2 class="font-headline font-black text-4xl text-on-surface uppercase tracking-tight">Yeni Evini Seç</h2>
+            <p class="font-body text-on-surface-variant text-lg mt-3">Yıldız puanınla eşleşen takımlardan birinin başına geç.</p>
+            <div class="inline-flex items-center gap-2 mt-4 bg-surface-container-high px-5 py-2 rounded-full border border-primary/20">
+                <span class="font-label text-xs text-on-surface-variant uppercase tracking-widest">Senin Yıldızın:</span>
+                @for (int s = 0; s < managerStars; s++)
+                {
+                    <span class="text-primary text-lg">★</span>
+                }
+            </div>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="bg-error/10 border border-error/20 text-error p-4 rounded-xl mb-6 text-center font-headline font-bold text-sm">
+                @TempData["Error"]
+            </div>
+        }
+
+        @{
+            var groupedTeams = Model.GroupBy(t => t.RequiredStarRating).OrderBy(g => g.Key);
+        }
+
+        @foreach (var group in groupedTeams)
+        {
+            var starCount = group.Key;
+            var isLocked = starCount > managerStars;
+
+            <div class="mb-10">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="flex items-center gap-0.5">
+                        @for (int s = 0; s < starCount; s++)
+                        {
+                            <span class="@(isLocked ? "text-on-surface-variant/40" : "text-primary") text-xl">★</span>
+                        }
+                    </div>
+                    <h3 class="font-headline font-bold text-lg @(isLocked ? "text-on-surface-variant/50" : "text-on-surface") uppercase tracking-wider">
+                        @starCount. Seviye Takımlar
+                    </h3>
+                    @if (isLocked)
+                    {
+                        <span class="material-symbols-outlined text-on-surface-variant/40 text-sm">lock</span>
+                        <span class="font-label text-[10px] text-on-surface-variant/40 uppercase tracking-widest">@starCount ★ Gerekli</span>
+                    }
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    @foreach (var team in group.OrderBy(t => t.Name))
+                    {
+                        var locked = team.RequiredStarRating > managerStars;
+
+                        <div class="relative group">
+                            @if (!locked)
+                            {
+                                <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/50 rounded-2xl blur opacity-0 group-hover:opacity-30 transition duration-500"></div>
+                            }
+
+                            <div class="relative flex flex-col h-full bg-surface-container-high border @(locked ? "border-outline-variant/10" : "border-outline-variant/20") rounded-2xl p-6 transition-all duration-300 @(!locked ? "group-hover:-translate-y-2" : "opacity-50")">
+                                @if (locked)
+                                {
+                                    <div class="absolute inset-0 rounded-2xl bg-[#121212]/60 z-10 flex items-center justify-center">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="material-symbols-outlined text-on-surface-variant/60 text-5xl">lock</span>
+                                            <span class="font-label text-xs text-on-surface-variant/60 uppercase tracking-widest">@team.RequiredStarRating ★ Gerekli</span>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="flex-1">
+                                    <div class="flex items-start justify-between mb-5">
+                                        <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-primary text-2xl">sports_soccer</span>
+                                        </div>
+                                        <div class="bg-surface-container-highest px-3 py-1.5 rounded-full border border-primary/20">
+                                            <span class="font-headline font-bold text-primary text-sm">@team.Ovr OVR</span>
+                                        </div>
+                                    </div>
+
+                                    <h3 class="font-headline font-bold text-xl text-on-surface uppercase tracking-tight mb-1">@team.Name</h3>
+
+                                    <div class="flex items-center gap-0.5 mb-4">
+                                        @for (int s = 0; s < team.RequiredStarRating; s++)
+                                        {
+                                            <span class="text-primary/60 text-xs">★</span>
+                                        }
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between items-center bg-surface-container-low p-3 rounded-lg">
+                                            <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">Bütçe</span>
+                                            <span class="font-body font-bold text-primary text-sm">@team.Budget.ToString("N0") €</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (!locked)
+                                {
+                                    <form asp-action="SelectTeam" asp-controller="Onboarding" method="post" class="mt-6">
+                                        <input type="hidden" name="teamId" value="@team.Id" />
+                                        <button type="submit" class="w-full py-3.5 rounded-xl border-2 border-primary text-primary font-headline font-bold uppercase tracking-widest text-sm hover:bg-primary hover:text-on-primary-fixed transition-colors active:scale-95">
+                                            Başa Geç
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <div class="mt-6">
+                                        <div class="w-full py-3.5 rounded-xl border-2 border-outline-variant/20 text-on-surface-variant/30 font-headline font-bold uppercase tracking-widest text-sm text-center cursor-not-allowed">
+                                            Kilitli
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,48 @@
+@model IEnumerable<AltLigMenajer.Models.Fixture>
+
+@{
+    ViewData["Title"] = "Fikstür";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int teamId = ViewBag.TeamId ?? 0;
+}
+
+<div class="min-h-screen bg-background pt-8 pb-32 px-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="font-headline font-black text-4xl text-on-surface uppercase tracking-tighter mb-8">Sezon Fikstürü</h1>
+
+        <div class="bg-surface-container rounded-2xl border border-outline-variant/20 overflow-hidden shadow-2xl">
+            <div class="divide-y divide-outline-variant/10">
+                @foreach (var fixture in Model)
+                {
+                    var isHome = fixture.HomeTeamId == teamId;
+                    var opponent = isHome ? fixture.AwayTeam : fixture.HomeTeam;
+                    
+                    <div class="flex flex-col sm:flex-row items-center justify-between p-5 hover:bg-surface-bright transition-colors">
+                        <div class="flex items-center gap-6 flex-1 w-full mb-4 sm:mb-0">
+                            <div class="w-20 text-center flex-shrink-0">
+                                <span class="font-label text-xs font-bold text-on-surface-variant uppercase block mb-1">Tarih</span>
+                                <span class="font-headline font-bold text-primary">@fixture.MatchDate.ToString("dd/MM")</span>
+                            </div>
+                            
+                            <div class="flex-1 flex items-center justify-center sm:justify-start gap-4">
+                                <span class="font-headline font-bold text-xl @(isHome ? "text-on-surface" : "text-on-surface-variant") text-right flex-1 truncate">@fixture.HomeTeam?.Name</span>
+                                <div class="bg-surface-container-high px-4 py-2 rounded-lg font-headline font-black text-xl text-on-surface min-w-[80px] text-center border border-outline-variant/20 shadow-inner">
+                                    @(fixture.IsPlayed ? $"{fixture.HomeScore} - {fixture.AwayScore}" : "v")
+                                </div>
+                                <span class="font-headline font-bold text-xl @(!isHome ? "text-on-surface" : "text-on-surface-variant") text-left flex-1 truncate">@fixture.AwayTeam?.Name</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                @if (!Model.Any())
+                {
+                    <div class="p-12 text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-6xl opacity-20 mb-4 block">event_busy</span>
+                        <p class="font-headline font-bold text-xl">Fikstür bulunamadı</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

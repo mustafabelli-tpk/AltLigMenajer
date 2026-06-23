@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = "Koçluk Tarzı Seçimi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-screen flex flex-col relative overflow-hidden bg-[#121212] pt-20 pb-12 px-6">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/8 blur-[200px] pointer-events-none rounded-full"></div>
+
+    <div class="z-10 max-w-5xl mx-auto w-full">
+        <div class="text-center mb-10">
+            <span class="inline-block p-4 rounded-full bg-primary/10 text-primary mb-4">
+                <span class="material-symbols-outlined text-4xl">psychology</span>
+            </span>
+            <h2 class="font-headline font-black text-4xl text-on-surface uppercase tracking-tight">Koçluk Tarzını Belirle</h2>
+            <p class="font-body text-on-surface-variant text-lg mt-3">Yönetim felsefeni seç — takımın seni tanısın.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Motivator -->
+            <form asp-action="SelectCoach" asp-controller="Onboarding" method="post" class="relative group cursor-pointer">
+                <input type="hidden" name="coachTrait" value="Motivator" />
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-[#ff6b35] to-[#ff9f1c] rounded-2xl blur opacity-0 group-hover:opacity-40 transition duration-500"></div>
+                <button type="submit" class="relative w-full text-left flex flex-col h-full bg-surface-container-high border border-outline-variant/20 rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-[#ff6b35]/40">
+                    <div class="w-16 h-16 rounded-2xl bg-[#ff6b35]/15 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                        <span class="text-4xl">🔥</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-xl text-on-surface uppercase tracking-tight mb-2">Motivasyon</h3>
+                    <p class="font-body text-on-surface-variant text-sm leading-relaxed flex-1">Oyuncuları ateşleyen, moral yükselten bir lider. Soyunma odasında sözün geçer.</p>
+                    <div class="mt-5 flex items-center gap-2 text-[#ff6b35]">
+                        <span class="material-symbols-outlined text-sm">trending_up</span>
+                        <span class="font-label text-xs font-bold uppercase tracking-widest">Moral Bonus</span>
+                    </div>
+                </button>
+            </form>
+
+            <!-- Tactician -->
+            <form asp-action="SelectCoach" asp-controller="Onboarding" method="post" class="relative group cursor-pointer">
+                <input type="hidden" name="coachTrait" value="Tactician" />
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-[#4361ee] to-[#7209b7] rounded-2xl blur opacity-0 group-hover:opacity-40 transition duration-500"></div>
+                <button type="submit" class="relative w-full text-left flex flex-col h-full bg-surface-container-high border border-outline-variant/20 rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-[#4361ee]/40">
+                    <div class="w-16 h-16 rounded-2xl bg-[#4361ee]/15 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                        <span class="text-4xl">🧠</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-xl text-on-surface uppercase tracking-tight mb-2">Taktikçi</h3>
+                    <p class="font-body text-on-surface-variant text-sm leading-relaxed flex-1">Oyunu okuyan, stratejik hamleleriyle fark yaratan bir beyin. Sahada düzen senin eserin.</p>
+                    <div class="mt-5 flex items-center gap-2 text-[#4361ee]">
+                        <span class="material-symbols-outlined text-sm">strategy</span>
+                        <span class="font-label text-xs font-bold uppercase tracking-widest">Taktik Bonus</span>
+                    </div>
+                </button>
+            </form>
+
+            <!-- Defensive Mind -->
+            <form asp-action="SelectCoach" asp-controller="Onboarding" method="post" class="relative group cursor-pointer">
+                <input type="hidden" name="coachTrait" value="DefensiveMind" />
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-[#06d6a0] to-[#118ab2] rounded-2xl blur opacity-0 group-hover:opacity-40 transition duration-500"></div>
+                <button type="submit" class="relative w-full text-left flex flex-col h-full bg-surface-container-high border border-outline-variant/20 rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-[#06d6a0]/40">
+                    <div class="w-16 h-16 rounded-2xl bg-[#06d6a0]/15 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                        <span class="text-4xl">🛡️</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-xl text-on-surface uppercase tracking-tight mb-2">Defansif Deha</h3>
+                    <p class="font-body text-on-surface-variant text-sm leading-relaxed flex-1">Kaleyi geçilmez kılan, savunma duvarı ören bir stratejist. Gol yemek senin sözlüğünde yok.</p>
+                    <div class="mt-5 flex items-center gap-2 text-[#06d6a0]">
+                        <span class="material-symbols-outlined text-sm">shield</span>
+                        <span class="font-label text-xs font-bold uppercase tracking-widest">Savunma Bonus</span>
+                    </div>
+                </button>
+            </form>
+
+            <!-- Youth Developer -->
+            <form asp-action="SelectCoach" asp-controller="Onboarding" method="post" class="relative group cursor-pointer">
+                <input type="hidden" name="coachTrait" value="YouthDeveloper" />
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-[#56ab2f] rounded-2xl blur opacity-0 group-hover:opacity-40 transition duration-500"></div>
+                <button type="submit" class="relative w-full text-left flex flex-col h-full bg-surface-container-high border border-outline-variant/20 rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-2 group-hover:border-primary/40">
+                    <div class="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                        <span class="text-4xl">🌱</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-xl text-on-surface uppercase tracking-tight mb-2">Genç Geliştirici</h3>
+                    <p class="font-body text-on-surface-variant text-sm leading-relaxed flex-1">Geleceğin yıldızlarını yetiştiren bir usta. Altyapından parlayan isimler senin imzan.</p>
+                    <div class="mt-5 flex items-center gap-2 text-primary">
+                        <span class="material-symbols-outlined text-sm">spa</span>
+                        <span class="font-label text-xs font-bold uppercase tracking-widest">Gelişim Bonus</span>
+                    </div>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,119 @@
+@model AltLigMenajer.Models.StatsViewModel
+@{
+    int selectedTier = (int)(ViewBag.SelectedTier ?? 2);
+    ViewData["Title"] = "Krallık";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isGoals = Model.StatType == "goals";
+    string leagueName = selectedTier == 1 ? "SÜPER LİG" : "TFF 1. LİG";
+}
+@section Styles {
+<style>
+.glass-panel { background: rgba(26,26,26,0.6); backdrop-filter: blur(20px); border: 1px solid rgba(72,72,71,0.2); }
+.tier-tab { transition: all 0.2s; }
+.tier-tab.active { color: #8eff71; border-bottom: 2px solid #8eff71; }
+.tier-tab:not(.active) { color: #adaaaa; }
+.tier-tab:not(.active):hover { color: #ffffff; }
+</style>
+}
+
+<header class="fixed top-0 z-50 w-full bg-[#0e0e0e] flex items-center px-6 py-4 bg-gradient-to-b from-[#1a1a1a] to-transparent">
+    <div class="flex items-center">
+        <h1 class="font-headline text-lg font-bold uppercase tracking-tighter text-primary">@leagueName</h1>
+    </div>
+    <div class="flex items-center gap-4 ml-auto">
+    </div>
+</header>
+
+<main class="pt-24 pb-32 px-4 min-h-screen max-w-4xl mx-auto">
+    <!-- League Tier Tabs -->
+    <div class="flex justify-center gap-4 mb-6">
+        <a asp-action="Stats" asp-controller="League" asp-route-tier="1" asp-route-type="@Model.StatType"
+           class="tier-tab pb-2 px-4 font-headline font-bold text-sm uppercase tracking-wider @(selectedTier == 1 ? "active" : "")">
+            🏆 Süper Lig
+        </a>
+        <a asp-action="Stats" asp-controller="League" asp-route-tier="2" asp-route-type="@Model.StatType"
+           class="tier-tab pb-2 px-4 font-headline font-bold text-sm uppercase tracking-wider @(selectedTier == 2 ? "active" : "")">
+            ⚽ TFF 1. Lig
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="flex justify-center gap-8 mb-8 border-b border-outline-variant/10">
+        <a asp-action="Index" asp-controller="League" asp-route-tier="@selectedTier" class="pb-3 px-2 text-on-surface-variant font-label font-bold text-xs uppercase tracking-widest hover:text-on-surface transition-colors">PUAN DURUMU</a>
+        <a asp-action="Fixtures" asp-controller="League" asp-route-tier="@selectedTier" class="pb-3 px-2 text-on-surface-variant font-label font-bold text-xs uppercase tracking-widest hover:text-on-surface transition-colors">FİKSTÜR</a>
+        <a asp-action="Stats" asp-controller="League" asp-route-tier="@selectedTier" class="pb-3 px-2 text-primary font-label font-bold text-xs uppercase tracking-widest border-b-2 border-primary">KRALLIK</a>
+    </nav>
+
+    <!-- Stat Toggles -->
+    <div class="flex justify-center mb-8">
+        <div class="flex p-1 bg-surface-container-high rounded-xl border border-outline-variant/20">
+            <a asp-action="Stats" asp-route-type="goals" asp-route-tier="@selectedTier" class="px-6 py-2 rounded-lg font-label text-xs uppercase tracking-widest font-bold transition-all @(isGoals ? "bg-primary text-on-primary-fixed shadow-md" : "text-on-surface-variant hover:text-on-surface")">
+                Gol Kralı
+            </a>
+            <a asp-action="Stats" asp-route-type="assists" asp-route-tier="@selectedTier" class="px-6 py-2 rounded-lg font-label text-xs uppercase tracking-widest font-bold transition-all @(!isGoals ? "bg-tertiary text-on-tertiary-fixed shadow-md" : "text-on-surface-variant hover:text-on-surface")">
+                Asist Kralı
+            </a>
+        </div>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <section class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container/50 border-b border-outline-variant/20">
+                        <th class="py-4 px-6 font-label text-[10px] text-on-surface-variant uppercase font-bold w-12 text-center">#</th>
+                        <th class="py-4 px-4 font-label text-[10px] text-on-surface-variant uppercase font-bold">OYUNCU</th>
+                        <th class="py-4 px-4 font-label text-[10px] text-on-surface-variant uppercase font-bold">TAKIM</th>
+                        <th class="py-4 px-6 font-label text-[10px] @(isGoals ? "text-primary" : "text-tertiary") uppercase font-black text-center">@(isGoals ? "GOL" : "ASİST")</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                    @{ int rank = 0; }
+                    @foreach (var player in Model.TopPlayers)
+                    {
+                        rank++;
+                        int count = isGoals ? player.Goals : player.Assists;
+                        string rowClass = rank == 1 ? (isGoals ? "bg-primary/10 border-l-4 border-primary" : "bg-tertiary/10 border-l-4 border-tertiary") : "hover:bg-white/5 transition-colors";
+
+                        <tr class="@rowClass">
+                            <td class="py-4 px-6 text-center font-headline text-lg @(rank == 1 ? "font-black " + (isGoals ? "text-primary" : "text-tertiary") : "font-bold text-on-surface-variant")">
+                                @rank
+                            </td>
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center border border-outline-variant/20">
+                                        <span class="material-symbols-outlined text-sm text-on-surface-variant">person</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-headline font-bold text-on-surface block">@player.Name</span>
+                                        <span class="font-label text-[10px] text-on-surface-variant uppercase">@player.Position • OVR @player.Ovr</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 text-sm font-semibold text-on-surface-variant">
+                                @player.Team?.Name
+                            </td>
+                            <td class="py-4 px-6 text-center font-headline text-2xl font-black @(isGoals ? "text-primary" : "text-tertiary")">
+                                @count
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.TopPlayers.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-on-surface-variant font-label text-sm uppercase tracking-widest">
+                                Henüz istatistik bulunmuyor.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div class="fixed top-0 left-0 w-full h-screen pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 blur-[120px] rounded-full"></div>
+    <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-tertiary/5 blur-[120px] rounded-full"></div>
+</div>
