@@ -135,7 +135,7 @@ Frontend (Tailwind & JS):
 ## 📸 Ekran Görüntüleri Galerisi
 
 ### Kulüp Ofisi
-![Ofis](wwwroot/images/screenshots/ofisekrani.png)
+![Ofis](wwwroot/images/screenshots/ofisekranı.png)
 
 ### Takım Kadrosu
 ![Kadro](wwwroot/images/screenshots/kadroekranı.png)
