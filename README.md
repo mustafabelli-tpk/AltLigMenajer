@@ -141,16 +141,16 @@ Frontend (Tailwind & JS):
 ![Kadro](wwwroot/images/screenshots/kadroekranı.png)
 
 ### Taktik Panosu
-![Taktikler](wwwroot/images/screenshots/taktikekrani.png)
+![Taktikler](wwwroot/images/screenshots/taktikekranı.png)
 
 ### Transfer Merkezi
-![Transfer Hub](wwwroot/images/screenshots/transferekrani.png)
+![Transfer Hub](wwwroot/images/screenshots/transferekranı.png)
 
 ### Lig ve Puan Durumu
-![Lig Fikstürü](wwwroot/images/screenshots/ligtablosuekrani.png)
+![Lig Fikstürü](wwwroot/images/screenshots/ligtablosuekranı.png)
 
 ### Canlı Maç Motoru
-![Maç Anı](wwwroot/images/screenshots/macekrani.png)
+![Maç Anı](wwwroot/images/screenshots/macekranı.png)
 
 ---
 
