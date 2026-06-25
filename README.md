@@ -65,7 +65,7 @@ AltLigMenajer/
 
 ### 1. Sistem Gereksinimleri
 ```bash
-- .NET 9.0 SDK (kesinlikle olması gerek plmazsa uygulama çalışmaz)
+- .NET 9.0 SDK (kesinlikle olması gerek olmazsa uygulama çalışmaz.)
 - SQLite uyumlu bir IDE (Visual Studio, VS Code veya Antigravity IDE)
 ```
 
@@ -77,8 +77,12 @@ cd AltLigMenajer
 
 ### 3. Derleme ve Çalıştırma
 ```bash
-- .NET 9.0 SDK (kesinlikle olması gerek plmazsa uygulama çalışmaz)
+- .NET 9.0 SDK (kesinlikle olması gerek olmazsa uygulama çalışmaz)
 - SQLite uyumlu bir IDE (Visual Studio, VS Code veya Antigravity IDE)
+
+# Sunucuyu yerel ağda başlat
+dotnet run(.NET 9.0 SDK kurulu olduktan sonra veri tabanı kurmadan önce terminalden dotnet run komudu ile çalıştırmayı deneyin eğer çalışırsa veri tabanı kurmaya gerek kalmaz.(çalışmaz ise aşağıda ki işlemleri yapmanız gerekmektedir..))
+
 # Entity Framework CLI araçlarını yükle (Eğer yüklü değilse)
 dotnet tool restore
 
