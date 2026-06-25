@@ -138,7 +138,7 @@ Frontend (Tailwind & JS):
 ![Ofis](wwwroot/images/screenshots/ofisekrani.png)
 
 ### Takım Kadrosu
-![Kadro](wwwroot/images/screenshots/kadroekrani.png)
+![Kadro](wwwroot/images/screenshots/kadroekranı.png)
 
 ### Taktik Panosu
 ![Taktikler](wwwroot/images/screenshots/taktikekrani.png)
