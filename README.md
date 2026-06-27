@@ -81,6 +81,7 @@ cd AltLigMenajer
 - SQLite uyumlu bir IDE (Visual Studio, VS Code veya Antigravity IDE)
 
 # Sunucuyu yerel ağda başlat
+- cd AltLigMenajer komutunu yazmazsanız kod klasörüne girmez ve uygulamayı başlatmaz.
 dotnet run(.NET 9.0 SDK kurulu olduktan sonra veri tabanı kurmadan önce terminalden dotnet run komudu ile çalıştırmayı deneyin eğer çalışırsa veri tabanı kurmaya gerek kalmaz.(çalışmaz ise aşağıda ki işlemleri yapmanız gerekmektedir..))
 
 # Entity Framework CLI araçlarını yükle (Eğer yüklü değilse)
